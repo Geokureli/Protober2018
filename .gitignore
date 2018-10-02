@@ -1,0 +1,7 @@
+# Build and Release Folders
+Export/
+
+# Other files and folders
+.settings/
+*.TTF.hash
+Thumbs.db
