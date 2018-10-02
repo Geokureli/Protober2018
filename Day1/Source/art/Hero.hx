@@ -1,6 +1,6 @@
 package art;
 
-import Main1.HealthBar;
+import Main.HealthBar;
 import flixel.FlxG;
 
 class Hero extends WrapSprite {

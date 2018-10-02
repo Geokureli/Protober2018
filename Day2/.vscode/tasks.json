@@ -1,0 +1,38 @@
+{ "version": "2.0.0"
+    , "tasks": 
+        [   { "label"         : "Flash release"
+            , "command"       : "haxelib"
+            , "args"          : ["run", "lime", "test", "flash"]
+            , "problemMatcher": "$haxe"
+            }
+        ,   { "label"         : "Flash debug"
+            , "command"       : "haxelib"
+            , "args"          : ["run", "lime", "test", "flash", "-debug", "-Dfdb"]
+            , "problemMatcher": "$haxe"
+            // , "group"         : { "kind": "test", "isDefault": true }
+            }
+        ,   { "label"         : "Flash debug (build only)"
+            , "command"       : "haxelib"
+            , "args"          : ["run", "lime", "build", "flash", "-debug", "-Dfdb"]
+            , "problemMatcher": "$haxe"
+            // , "group"         : { "kind": "build", "isDefault": true }
+            }
+        ,   { "label"         : "Html5 release"
+            , "command"       : "haxelib"
+            , "args"          : ["run", "lime", "test", "html5", "-Dwebgl"]
+            , "problemMatcher": "$haxe"
+            }
+        ,   { "label"         : "Html5 debug"
+            , "command"       : "haxelib"
+            , "args"          : ["run", "lime", "test", "html5", "-debug", "-Dwebgl"]
+            , "problemMatcher": "$haxe"
+            // , "group"         : { "kind": "test", "isDefault": true }
+            }
+        ,   { "label"         : "Html5 debug (build only)"
+            , "command"       : "haxelib"
+            , "args"          : ["run", "lime", "build", "html5", "-debug", "-Dwebgl"]
+            , "problemMatcher": "$haxe"
+            // , "group"         : { "kind": "build", "isDefault": true }
+            }
+        ]
+    }

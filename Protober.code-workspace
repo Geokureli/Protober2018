@@ -1,0 +1,46 @@
+{ "folders": 
+    [ { "path": "Day2" }
+    , { "path": "Day1" }
+    ]
+, "settings":
+    { "lime.projectFile": "project.xml"
+    , "lime.defaultBuildConfiguration": "Debug"
+    , "lime.defaultTarget": "HTML5"
+    , "haxe.displayConfigurations":
+        [   [ "Export/flash/haxe/debug.hxml"   ]
+        ,   [ "Export/flash/haxe/release.hxml" ]
+        ,   [ "Export/flash/haxe/final.hxml"   ]
+        ,   [ "Export/html5/haxe/debug.hxml"   ]
+        ,   [ "Export/html5/haxe/release.hxml" ]
+        ,   [ "Export/html5/haxe/final.hxml"   ]
+        ,   [ "Export/macos/haxe/debug.hxml"   ]
+        ,   [ "Export/macos/haxe/release.hxml" ]
+        ,   [ "Export/macos/haxe/final.hxml"   ]
+        ]
+    , "editor.insertSpaces": true
+    , "haxe.diagnosticsPathFilter": "${workspaceRoot}/Source"
+    , "search.exclude": 
+        { "test/bin/**/*.hx": true
+        },
+        "as3mxml.sdk.framework": "/Applications/Adobe Flash Builder 4.7/sdks/4.6.0"
+    }
+, "launch": 
+    { "configurations": 
+        [   { "name"         : "Flash"
+            , "type"         : "fdb"
+            , "request"      : "launch"
+            , "preLaunchTask": "Flash debug (build only)"
+            , "program"      : "${workspaceRoot}/Export/flash/bin/Protober2.swf"
+            }
+        ,   { "name"         : "Html5"
+            , "type"         : "chrome"
+            , "request"      : "launch"
+            , "url"          : "http://127.0.0.1:3018"
+            , "sourceMaps"   : true
+            , "preLaunchTask": "Html5 debug (build only)"
+            , "webRoot"      : "${workspaceFolder}"
+            }
+        ]
+    , "compounds": []
+    }
+}

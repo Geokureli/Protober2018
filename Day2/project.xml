@@ -3,8 +3,8 @@
     <!-- _________________________ APPLICATION SETTINGS _________________________ -->
     
     <app
-        title    ="Protober1"
-        file     ="Protober1"
+        title    ="Protober2"
+        file     ="Protober2"
         main     ="Main"
         package  ="com.geokureli.protober"
         version  ="0.0.1"
