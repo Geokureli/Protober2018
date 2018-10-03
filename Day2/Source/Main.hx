@@ -16,7 +16,7 @@ class Main extends openfl.display.Sprite {
     public function new () {
         super();
         
-        FlxG.debugger.drawDebug = true;
+        // FlxG.debugger.drawDebug = true;
         
         addChild(new flixel.FlxGame(480, 320, GameState, 2));
     }
