@@ -18,7 +18,7 @@
         ,   [ "Export/macos/haxe/final.hxml"   ]
         ]
     , "editor.insertSpaces": true
-    , "haxe.diagnosticsPathFilter": "${workspaceRoot}/Source"
+    //, "haxe.diagnosticsPathFilter": "${workspaceRoot}/Source"
     , "search.exclude": 
         { "test/bin/**/*.hx": true
         },
@@ -29,16 +29,16 @@
         [   { "name"         : "Flash"
             , "type"         : "fdb"
             , "request"      : "launch"
-            , "preLaunchTask": "Flash debug (build only)"
-            , "program"      : "${workspaceRoot}/Export/flash/bin/Protober2.swf"
+            // , "preLaunchTask": "haxe: active configuration"
+            , "program"      : "${workspaceRoot:Day2}/Export/flash/bin/Protober2.swf"
             }
         ,   { "name"         : "Html5"
             , "type"         : "chrome"
             , "request"      : "launch"
             , "url"          : "http://127.0.0.1:3018"
             , "sourceMaps"   : true
-            , "preLaunchTask": "Html5 debug (build only)"
-            , "webRoot"      : "${workspaceFolder}"
+            //, "preLaunchTask": "Html5 debug (build only)"
+            , "webRoot"      : "${workspaceFolder:Day2}"
             }
         ]
     , "compounds": []

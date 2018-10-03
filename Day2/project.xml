@@ -32,7 +32,7 @@
     
     <set name="BUILD_DIR" value="../Export" />
     <classpath name="source" />
-    <assets path="Assets" rename="assets" exclude="*.wav|*.ogg|*.xml|*.db" />
+    <assets path="Assets" rename="assets" exclude="*.wav|*.ogg|*.xml|*.db|*.aseprite" />
     
     <app path="Export" />
     
