@@ -1,9 +1,9 @@
 { "folders": 
-    [   { "path": "Day3" }
-    ,   { "path": "Day2" }
-    ,   { "path": "Day1" }
-    ]
-, "settings":
+    [ { "path": "Day5" }
+    , { "path": "Day3" }
+    , { "path": "Day2" }
+    , { "path": "Day1" }
+    ], "settings":
     { "lime.projectFile": "project.xml"
     , "lime.defaultBuildConfiguration": "Debug"
     , "lime.defaultTarget": "HTML5"
@@ -31,7 +31,7 @@
             , "type"         : "fdb"
             , "request"      : "launch"
             // , "preLaunchTask": "debug: flash"
-            , "program"      : "${workspaceRoot:Day3}/Export/flash/bin/Protober3.swf"
+            , "program"      : "${workspaceRoot:Day5}/Export/flash/bin/Protober5.swf"
             }
         ,   { "name"         : "Html5"
             , "type"         : "chrome"
@@ -39,7 +39,7 @@
             , "url"          : "http://127.0.0.1:3018"
             , "sourceMaps"   : true
             //, "preLaunchTask": "Html5 debug (build only)"
-            , "webRoot"      : "${workspaceFolder:Day3}"
+            , "webRoot"      : "${workspaceFolder:Day5}"
             }
         ]
     , "compounds": []
