@@ -17,6 +17,8 @@ class Main extends openfl.display.Sprite {
         super();
         
         addChild(new flixel.FlxGame(160, 240, MenuState, 2));
+        
+        FlxG.mouse.useSystemCursor = true;
     }
 }
 
@@ -28,8 +30,8 @@ class MenuState extends flixel.FlxState {
         add(new Text
             ( 0
             // , "Click for mouse\nor\nPress any key\nfor keyboard"
-            , "Click to change colors\n\nOK"
-            , 16
+            , "Click to change colors\n\nballs go through your paddle if its a different color\n\nOK"
+            , 8
             ).centerY()
         );
     }
@@ -106,7 +108,6 @@ class GameState extends flixel.FlxState {
             
             if (ball != null) {
                 
-                ball.color = 0xFF0000;
                 _balls.kill();
                 
                 _gameOver.visible = true;
@@ -138,11 +139,11 @@ class GameState extends flixel.FlxState {
                 , -Math.abs(ball.velocity.y)
                 );
             
-        } else {
+        }// else {
             
-            ball.kill();
-            ball.color = 0xFF0000;
-        }
+        //     ball.kill();
+        //     ball.color = 0xFF0000;
+        // }
     }
     
     function overlapBallEnemy(ball:Ball, enemy:Enemy):Void {
@@ -169,10 +170,6 @@ class GameState extends flixel.FlxState {
     
     function startGame():Void {
         
-        _instructions.visible = false;
-        _gameOver.visible = false;
-        
-        
         var ball = _balls.getFirstExisting();
         _balls.remove(ball);
         _balls.forEach (
@@ -183,7 +180,7 @@ class GameState extends flixel.FlxState {
         );
         _balls.add(ball);
         
-        if (ball.color == 0xFF0000) {
+        if (_gameOver.visible) {
             
             _enemies.kill();
             _enemies.revive();
@@ -192,6 +189,9 @@ class GameState extends flixel.FlxState {
         ball.velocity.set(100, -100);
         ball.color = _hero.color;
         _balls.revive();
+        
+        _instructions.visible = false;
+        _gameOver.visible = false;
     }
 }
 

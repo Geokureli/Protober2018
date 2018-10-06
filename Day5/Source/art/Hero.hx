@@ -16,6 +16,8 @@ class Hero extends flixel.FlxSprite {
     
     public var onAction:Void->Void;
     
+    var isMobile:Bool = false;
+    
     public function new (x:Float = 0, y:Float = 0) {
         super(x, y, "assets/Hero.png");
         
@@ -24,6 +26,8 @@ class Hero extends flixel.FlxSprite {
         maxVelocity.set(SPEED, SPEED);
         drag.copyFrom(maxVelocity).scale(INV_SPD_TIME);
         color = Color.ON;
+        
+        isMobile = getIsMobile();
     }
     
     override function update(elapsed:Float) {
@@ -40,6 +44,28 @@ class Hero extends flixel.FlxSprite {
         if (y > FlxG.height - height) y = FlxG.height - height;
     }
     
+    static public function getIsMobile():Bool {
+        
+        #if mobile
+            return true;
+        #elseif html5
+            var browserAgent:String = js.Browser.navigator.userAgent.toLowerCase();
+            trace(browserAgent);
+            if (browserAgent != null) {
+                
+                return browserAgent.indexOf("android"   ) >= 0
+                    || browserAgent.indexOf("blackBerry") >= 0
+                    || browserAgent.indexOf("iphone"    ) >= 0
+                    || browserAgent.indexOf("ipad"      ) >= 0
+                    || browserAgent.indexOf("ipod"      ) >= 0
+                    || browserAgent.indexOf("opera mini") >= 0
+                    || browserAgent.indexOf("iemobile"  ) >= 0;
+            }
+        #end
+        
+        return false;
+    }
+    
     static inline var CLICK_TIME = 0.1;
     var _pressTime = 0.0;
     function updateMouse(elapsed:Float):Void {
@@ -53,8 +79,8 @@ class Hero extends flixel.FlxSprite {
             if (_pressTime < CLICK_TIME)
                 swapColors();
             
-        } else
-            _pressTime += elapsed;
+        } //else if (isMobile)
+            // _pressTime += elapsed;
     }
     
     function updateKeys(elapsed:Float):Void {

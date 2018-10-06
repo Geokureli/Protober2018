@@ -27,7 +27,7 @@ class Enemy extends flixel.FlxSprite {
         super.revive();
         
         this.color = Color.getRandom();
-        dropsBall = FlxG.random.bool(40);
+        dropsBall = FlxG.random.bool(50);
         animation.play(dropsBall ? "drop" : "no_drop");
     }
     
