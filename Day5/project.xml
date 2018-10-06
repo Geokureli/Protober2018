@@ -17,7 +17,7 @@
     <!-- _________________________ WINDOW SETTINGS _________________________ -->
     
     <!--These window settings apply to all targets-->
-    <window width="320" height="480" fps="60" background="#000000" hardware="true" vsync="true" />
+    <window width="320" height="480" fps="60" background="#808080" hardware="true" vsync="true" />
     
     <!--Web-specific-->
     <window if="html5" orientation="landscape" />
@@ -82,3 +82,13 @@
     
     <!--Place custom nodes like icons here (higher priority to override the HaxeFlixel icon)-->
 </project>
+
+<!--
+ReferenceError: openfl is not defined
+Protober5.js:30129
+    at http://127.0.0.1:3002/Protober5.js:30129:44
+    at http://127.0.0.1:3002/Protober5.js:112881:3
+TypeError: lime.embed is not a function
+127.0.0.1:3002:61
+    at http://127.0.0.1:3002/:61:8
+-->
