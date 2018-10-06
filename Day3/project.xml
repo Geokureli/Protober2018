@@ -31,7 +31,8 @@
     <!--_________________________PATHS SETTINGS_________________________-->
     
     <set name="BUILD_DIR" value="../Export" />
-    <classpath name="source" />
+    <classpath name="Source" />
+    <classpath name="../Shared/Source"/>
     <assets path="Assets" rename="assets" exclude="*.wav|*.ogg|*.xml|*.db|*.aseprite" />
     
     <app path="Export" />

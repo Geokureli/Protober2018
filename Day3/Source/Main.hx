@@ -1,11 +1,11 @@
 package;
 
-import flixel.FlxCamera.FlxCameraFollowStyle;
 import flixel.FlxG;
+import flixel.FlxCamera.FlxCameraFollowStyle;
 
 import art.Hero;
 import art.Level;
-import art.Level.EditorLevel;
+import art.EditorLevel;
 
 class Main extends openfl.display.Sprite {
     
@@ -32,9 +32,7 @@ class GameState extends flixel.FlxState
         FlxG.debugger.drawDebug = true;
         FlxG.mouse.useSystemCursor = true;
         
-        // add(_level = new EditorLevel("assets/level.csv", Math.ceil(FlxG.width / 8), Math.ceil(FlxG.height / 8)));
-        add(_level = new EditorLevel("assets/level.csv"));
-        // add(_level = new Level("assets/level.csv"));
+        add(_level = new Level(true));
         _level.initWorld();
         
         // Create _player

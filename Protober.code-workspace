@@ -1,8 +1,9 @@
 { "folders": 
-    [ { "path": "Day5" }
-    , { "path": "Day3" }
+    [ { "path": "Day3" }
+    , { "path": "Day5" }
     , { "path": "Day2" }
     , { "path": "Day1" }
+    , { "path": "Shared" }
     ], "settings":
     { "lime.projectFile": "project.xml"
     , "lime.defaultBuildConfiguration": "Debug"
@@ -31,7 +32,7 @@
             , "type"         : "fdb"
             , "request"      : "launch"
             // , "preLaunchTask": "debug: flash"
-            , "program"      : "${workspaceRoot:Day5}/Export/flash/bin/Protober5.swf"
+            , "program"      : "${workspaceRoot:Day3}/Export/flash/bin/Protober3.swf"
             }
         ,   { "name"         : "Html5"
             , "type"         : "chrome"
