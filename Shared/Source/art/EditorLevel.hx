@@ -23,7 +23,8 @@ class EditorLevel extends flixel.tile.FlxTilemap {
     }
     
     public function bindCsvAssetSave
-        ( csvName      :String
+        ( namePrefix   :String
+        , csvName      :String
         , TileGraphic  :FlxTilemapGraphicAsset
         , TileWidth    :Int                    = 0
         , TileHeight   :Int                    = 0
@@ -35,7 +36,7 @@ class EditorLevel extends flixel.tile.FlxTilemap {
         
         _editingEnabled = true;
         _save = new FlxSave();
-        _save.bind(csvName);
+        _save.bind(namePrefix + csvName);
         
         var map:String = cast _save.data.csv;
         if(map == null)

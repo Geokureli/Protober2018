@@ -13,13 +13,11 @@ class Level extends EditorLevel {
         if (map == null)
             map = "assets/level.csv";
         
-        (editorEnabled ? bindCsvAssetSave : loadMapFromCSV)
-            ( map
-            , FlxGraphic.fromClass(GraphicAuto)
-            , 8
-            , 8
-            , AUTO
-            );
+        var graphics = FlxGraphic.fromClass(GraphicAuto);
+        if (editorEnabled)
+            bindCsvAssetSave("day8", map, graphics, 8, 8, AUTO);
+        else
+            loadMapFromCSV(map, graphics, 8, 8, AUTO);
     }
     
     public function initWorld():Void {
