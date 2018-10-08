@@ -1,6 +1,7 @@
 { "folders": 
-    [ { "path": "Day3" }
+    [ { "path": "Day8" }
     , { "path": "Day5" }
+    , { "path": "Day3" }
     , { "path": "Day2" }
     , { "path": "Day1" }
     , { "path": "Shared" }
