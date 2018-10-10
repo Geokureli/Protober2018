@@ -1,5 +1,7 @@
 package art;
 
+import flixel.tile.FlxTile;
+import flixel.tile.FlxBaseTilemap;
 import openfl.Assets;
 
 import flixel.FlxG;
@@ -16,39 +18,107 @@ class EditorLevel extends flixel.tile.FlxTilemap {
     var _drawing = false;
     var _adding = false;
     var _save:FlxSave;
+    var _mapName:String;
     
-    public function new () {
-        
+    public function new (saveName:String) {
         super();
+        
+        if(saveName != null)
+            initSave(saveName);
     }
     
-    public function bindCsvAssetSave
-        ( namePrefix   :String
-        , csvName      :String
-        , TileGraphic  :FlxTilemapGraphicAsset
-        , TileWidth    :Int                    = 0
-        , TileHeight   :Int                    = 0
-        , ?AutoTile    :FlxTilemapAutoTiling
-        , StartingIndex:Int                    = 0
-        , DrawIndex    :Int                    = 1
-        , CollideIndex :Int                    = 1
-        ):Void {
+    function initSave(key:String):Void {
         
-        _editingEnabled = true;
         _save = new FlxSave();
-        _save.bind(namePrefix + csvName);
+        _save.bind(key);
+    }
+    
+    function loadCsvSave(mapName:String):String {
         
-        var map:String = cast _save.data.csv;
-        if(map == null)
-            map = Assets.getText(csvName);
+        if (_save == null)
+            return null;
+        return Reflect.field(_save.data, mapName);
+    }
+    
+    public function clearSave(mapName:String):Bool {
         
-        loadMapFromCSV
+        if (_save == null)
+            return false;
+        
+        Reflect.setField(_save.data, mapName, null);
+        return _save.flush();
+    }
+    
+    function saveCsv(mapName:String, data:String):Bool {
+        
+        if (_save == null)
+            return false;
+        
+        Reflect.setField(_save.data, mapName, data);
+        return _save.flush();
+    }
+    
+    function saveCurrentCsv():Bool {
+        
+        var csv = getCsv();
+        openfl.system.System.setClipboard(csv);
+        if (_mapName != null)
+            return saveCsv(_mapName, csv);
+        
+        return false;
+    }
+    
+    function getCsv():String {
+        
+        var simple = auto != FlxTilemapAutoTiling.OFF;
+        var data = getData(simple);
+        if (!simple)
+            data = data.copy();
+        
+        var map = new Array<String>();
+        while (data.length > 0)
+            map.push(data.splice(0, widthInTiles).join(","));
+        
+        return map.join("\n");
+    }
+    
+    override function loadMapFromCSV
+    ( mapName      :String
+    , tileGraphic  :FlxTilemapGraphicAsset
+    , tileWidth    :Int = 0
+    , tileHeight   :Int = 0
+    , ?autoTile    :FlxTilemapAutoTiling
+    , startingIndex:Int = 0
+    , drawIndex    :Int = 1
+    , collideIndex :Int = 1
+    ):FlxBaseTilemap<FlxTile> {
+        
+        var map:String = loadCsvSave(mapName);
+            
+        if (map == null)
+            map = Assets.getText(mapName);
+        
+        if (map == null){
+            
+            map = mapName;
+            mapName = null;
+        }
+        _mapName = mapName;
+        
+        super.loadMapFromCSV
             ( map
-            , FlxGraphic.fromClass(GraphicAuto)
-            , 8
-            , 8
-            , AUTO
+            , tileGraphic
+            , tileWidth
+            , tileHeight
+            , autoTile
+            , startingIndex
+            , drawIndex
+            , collideIndex
             );
+        
+        saveCurrentCsv();
+        
+        return this;
     }
     
     override function update(elapsed:Float) {
@@ -73,64 +143,52 @@ class EditorLevel extends flixel.tile.FlxTilemap {
             
             _drawing = false;
             
-            saveCsv();
+            saveCurrentCsv();
             
         } else
             setTileByIndex(tileIndex, _adding ? 1 : 0);
     }
     
-    function saveCsv():Bool {
+    public function resizeAndSave(width:Int, height:Int, fillTile:Int = 0):Bool {
         
-        var csv = getCsv();
-        openfl.system.System.setClipboard(csv);
-        _save.data.csv = csv;
-        return _save.flush();
+        resize(width, height, fillTile);
+        
+        return saveCurrentCsv();
     }
     
-    function getCsv(simple:Bool = true):String {
+    inline function resize(tilesX:Int, tilesY:Int, fillTile:Int = 0):Void {
         
-        var data = getData(simple).copy();
-        var map = new Array<String>();
-        while (data.length > 0)
-            map.push(data.splice(0, widthInTiles).join(","));
+        var updated = false;
         
-        return map.join("\n");
-    }
-    
-    /**
-     * stretches the map to fill the game, never shrinks
-     * @param map 
-     * @return String
-     */
-    static public inline function stretchCsv(map:String, tilesX:Int, tilesY:Int, fillTile:Int = 0):String {
-        
-        var rowData = map.split('\n');
-        var rows = rowData.length;
-        var cols = rowData[0].split(",").length;
-        var add:String;
-        if (tilesX > cols) {
+        if (tilesX > widthInTiles) {
             
-            tilesX -= cols;
-            cols += tilesX;
-            add = "";
-            while (tilesX-- > 0)
-                add += ',$fillTile';
+            updated = true;
+            var i = heightInTiles;
+            while (i-- > 0) {
+                var j = tilesX - widthInTiles;
+                while (j-- > 0)
+                    _data.insert((i + 1) * widthInTiles, fillTile);
+            }
             
-            map = rowData.join(add + "\n") + add;
+            widthInTiles = tilesX;
         }
         
-        if (tilesY > rows) {
+        if (tilesY > heightInTiles) {
             
-            tilesY -= rows;
-            add = "";
-            while(cols-- > 0)
-                add += '$fillTile,';
+            updated = true;
+            heightInTiles = tilesY;
+            totalTiles = widthInTiles * heightInTiles;
             
-            add = add.substr(0, add.length - 1) + "\n";
-            while(tilesY-- > 0)
-                map += add;
+            var oldLen = _data.length;
+            while(oldLen++ < totalTiles)
+                _data.push(fillTile);
         }
         
-        return map;
+        if (updated){
+            
+            applyAutoTile();
+            computeDimensions();
+            updateMap();
+        }
     }
 }

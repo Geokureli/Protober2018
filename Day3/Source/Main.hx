@@ -32,7 +32,7 @@ class GameState extends flixel.FlxState
         FlxG.debugger.drawDebug = true;
         FlxG.mouse.useSystemCursor = true;
         
-        add(_level = new Level(true));
+        add(_level = new Level());
         _level.initWorld();
         
         // Create _player
@@ -65,29 +65,18 @@ class GameState extends flixel.FlxState
     public function setZoom(zoom:Float):Void {
         
         // Resize the camera based on the original value
-        var newWidth :Float = zoom / FlxG.camera.zoom * FlxG.camera.width;
-        var newHeight:Float = zoom / FlxG.camera.zoom * FlxG.camera.height;
-        var newX:Float = 0;
-        var newY:Float = 0;
+        var newWidth :Float = FlxG.camera.width  * zoom / FlxG.camera.zoom;
+        var newHeight:Float = FlxG.camera.height * zoom / FlxG.camera.zoom;
+        
+        trace('$newWidth, $newHeight | ${FlxG.camera.width}, ${FlxG.camera.height}');
         
         // set new camera zoom
         FlxG.camera.zoom = zoom;
         trace(FlxG.camera.zoom);
         
-        if (newWidth > _level.width)
-        {
-            newWidth = _level.width;
-            newX = (FlxG.stage.stageWidth/2) - (newWidth*FlxG.camera.zoom/2);
-        }
-        if (newHeight > _level.height)
-        {
-            newHeight = _level.height;
-            newY = (FlxG.stage.stageHeight/2) - (FlxG.camera.height*FlxG.camera.zoom/2);
-        }
- 
         // Set final size
         FlxG.camera.setSize(Std.int(newWidth), Std.int(newHeight));
-        FlxG.camera.setPosition(Std.int(newX), Std.int(newY));
+        //FlxG.camera.setPosition(Std.int(newX), Std.int(newY));
  
         // Update tilemap out-of-screen buffer
         // _level.updateBuffers();

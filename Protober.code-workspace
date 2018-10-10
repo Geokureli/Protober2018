@@ -1,5 +1,5 @@
 { "folders": 
-    [ { "path": "Day8" }
+    [ { "path": "Day9" }
     , { "path": "Day5" }
     , { "path": "Day3" }
     , { "path": "Day2" }
@@ -33,7 +33,7 @@
             , "type"         : "fdb"
             , "request"      : "launch"
             // , "preLaunchTask": "debug: flash"
-            , "program"      : "${workspaceRoot:Day3}/Export/flash/bin/Protober3.swf"
+            , "program"      : "${workspaceRoot:Day9}/Export/flash/bin/Protober9.swf"
             }
         ,   { "name"         : "Html5"
             , "type"         : "chrome"
@@ -41,7 +41,7 @@
             , "url"          : "http://127.0.0.1:3013"
             , "sourceMaps"   : true
             //, "preLaunchTask": "Html5 debug (build only)"
-            , "webRoot"      : "${workspaceFolder:Day5}"
+            , "webRoot"      : "${workspaceFolder:Day9}"
             }
         ]
     , "compounds": []
