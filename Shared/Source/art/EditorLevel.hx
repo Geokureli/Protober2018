@@ -14,7 +14,7 @@ import flixel.util.FlxSave;
 
 class EditorLevel extends flixel.tile.FlxTilemap {
     
-    var _editingEnabled = false;
+    var _editingEnabled = true;
     var _drawing = false;
     var _adding = false;
     var _save:FlxSave;
@@ -37,6 +37,7 @@ class EditorLevel extends flixel.tile.FlxTilemap {
         
         if (_save == null)
             return null;
+        
         return Reflect.field(_save.data, mapName);
     }
     
@@ -60,8 +61,12 @@ class EditorLevel extends flixel.tile.FlxTilemap {
     
     function saveCurrentCsv():Bool {
         
+        if (_save == null)
+            return false;
+        
         var csv = getCsv();
         openfl.system.System.setClipboard(csv);
+        
         if (_mapName != null)
             return saveCsv(_mapName, csv);
         

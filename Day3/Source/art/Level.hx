@@ -2,13 +2,12 @@ package art;
 
 import flixel.FlxG;
 import flixel.graphics.FlxGraphic;
-import flixel.tile.FlxTilemap;
 import flixel.tile.FlxTilemap.GraphicAuto;
 
 class Level extends EditorLevel {
     
     public function new (editorEnabled:Bool = true, forceLoadFile:Bool = false, resize:Bool = false) {
-        super("day3");
+        super(editorEnabled || !forceLoadFile || resize ? "day3" : null);
         
         _editingEnabled = editorEnabled;
         
