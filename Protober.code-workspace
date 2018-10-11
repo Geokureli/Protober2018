@@ -1,10 +1,10 @@
 { "folders": 
     [ { "path": "Day10" }
-    , { "path": "Day9" }
-    , { "path": "Day5" }
-    , { "path": "Day3" }
-    , { "path": "Day2" }
-    , { "path": "Day1" }
+    , { "path": "Day09" }
+    , { "path": "Day05" }
+    , { "path": "Day03" }
+    , { "path": "Day02" }
+    , { "path": "Day01" }
     , { "path": "Shared" }
     ], "settings":
     { "lime.projectFile": "project.xml"
