@@ -44,6 +44,12 @@
             //, "preLaunchTask": "Html5 debug (build only)"
             , "webRoot"      : "${workspaceFolder:Day10}"
             }
+        ,   { "name"         : "MacOS"
+            , "type"         : "hxcpp"
+            , "request"      : "launch"
+            //, "preLaunchTask": "MacOS debug (build only)"
+            , "program"      : "${workspaceFolder:Day10}/Export/macos/bin/Protober10.app/Contents/MacOS/Protober10"
+            }
         ]
     , "compounds": []
     }
