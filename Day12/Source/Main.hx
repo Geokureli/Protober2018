@@ -2,10 +2,11 @@ package;
 
 import flixel.math.FlxPoint;
 import flixel.group.FlxGroup;
-import art.Piece;
 import flixel.FlxG;
 import flixel.FlxSprite;
 
+import art.Board;
+import art.Piece;
 import art.SplashState;
 
 class Main extends openfl.display.Sprite {
@@ -48,13 +49,13 @@ class MenuState extends flixel.FlxState {
 
 class GameState extends flixel.FlxState {
     
-    inline static public var FPS = 16;
+    inline static public var FPS = 32;
     inline static public var STEP = 1 / FPS;
     
     var _lastStep = 0.0;
     var _piece:Piece;
-    var _droppedBlocks:FlxGroup;
-    var _things:FlxTypedGroup<Thing>;
+    var _board:Board;
+    var _pellets:FlxTypedGroup<Pellet>;
     var _stepNum = 0;
     
     
@@ -63,47 +64,31 @@ class GameState extends flixel.FlxState {
         
         FlxG.cameras.bgColor = FlxG.stage.color;
         
-        add(_droppedBlocks = new FlxGroup());
+        add(_board = new Board());
         var sprite = new FlxSprite(0, Piece.SIZE * 6);
         sprite.makeGraphic(FlxG.width, 2, 0xFF000000);
         add(sprite);
         
-        Thing.createRandom();
-        add(_things = new FlxTypedGroup<Thing>());
-        for (i in 0 ... 40)
-            _things.add(new Thing());
+        add(_pellets = Pellet.create());
         
         startSnake();
     }
     
     override function update(elapsed:Float) {
         super.update(elapsed);
+        _stepNum++;
         
-        // _lastStep += elapsed;
-        
-        // while(_lastStep > STEP) {
-            
-            // _lastStep -= STEP;
-            step();
-            _stepNum++;
-        // }
-        
-        if (!_piece.solid) {
-            
-            if (FlxG.keys.justPressed.SPACE)
-                _piece.solidify();
-            
-        } else
-            _things.visible = false;
-    }
-    
-    function step():Void {
+        if (_piece == null)
+            return;
         
         _piece.step(_stepNum);
         
         if (_piece.solid) {
             
-            if (_piece.y + _piece.bottom > FlxG.height || FlxG.overlap(_piece, _droppedBlocks)) {
+            FlxG.drawFramerate = FlxG.updateFramerate = 16;
+            _pellets.visible = false;
+            
+            if (_piece.y + _piece.bottom > FlxG.height || FlxG.overlap(_piece, _board)) {
                 
                 _piece.y = Std.int(_piece.y / Piece.SIZE) * Piece.SIZE;
                 if (!checkMotion())
@@ -113,14 +98,15 @@ class GameState extends flixel.FlxState {
                 checkMotion();
         } else {
             
-            for (thing in _things.members) {
+            for (pellet in _pellets.members) {
                 
-                if(thing.x == _piece.members[0].x && thing.y == _piece.members[0].y) {
+                if(pellet.x == _piece.members[0].x && pellet.y == _piece.members[0].y) {
                     
-                    if (thing.good)
+                    if (pellet.good)
                         _piece.solidify();
                     else {
                         
+                        _board.addGarbage();
                         remove(_piece);
                         _piece.destroy();
                         startSnake();
@@ -132,15 +118,9 @@ class GameState extends flixel.FlxState {
     
     function endTurn():Void{
         
-        var block;
-        while(_piece.members.length > 0){
-            
-            block = _piece.members.pop();
-            block.y = Std.int(block.y / Piece.SIZE) * Piece.SIZE;
-            _droppedBlocks.add(block);
-        }
-        
-        startSnake();
+        var piece = _piece;
+        _piece = null;
+        _board.addPiece(piece, startSnake);
     }
     
     function checkMotion():Bool {
@@ -150,7 +130,7 @@ class GameState extends flixel.FlxState {
             _piece.x += Piece.SIZE * _piece.motion;
             
             var oddFrame = _stepNum % 2 == 1;
-            if (FlxG.overlap(_piece, _droppedBlocks) || oddFrame) {
+            if (FlxG.overlap(_piece, _board) || oddFrame) {
                 
                 _piece.x -= Piece.SIZE * _piece.motion;
                 return oddFrame;
@@ -163,19 +143,21 @@ class GameState extends flixel.FlxState {
     
     function startSnake():Void {
         
-        add(_piece = new Piece(5, 0));
+        add(_piece = new Piece());
+        _piece.startIntro(() -> { FlxG.updateFramerate = FlxG.drawFramerate = 4; });
         
-        _things.visible = true;
-        Thing.shuffle();
-        for (thing in _things.members)
-            thing.randomise();
+        _pellets.visible = true;
+        Pellet.shuffle();
+        for (pellet in _pellets.members)
+            pellet.randomise();
     }
 }
 
-class Thing extends flixel.FlxSprite {
+class Pellet extends flixel.FlxSprite {
     
     static var _randomPoints:Array<FlxPoint>;
     static var _count = 0;
+    static var _group:FlxTypedGroup<Pellet>;
     
     public var good:Bool;
     
@@ -202,12 +184,18 @@ class Thing extends flixel.FlxSprite {
         FlxG.random.shuffle(_randomPoints);
     }
     
-    static public function createRandom():Void {
+    static public function create():FlxTypedGroup<Pellet> {
         
         _randomPoints = [];
         for (i in 0 ... 11)
             for (j in 0 ... 6)
-                if (Math.abs(5 - i) + j > 1)
+                if (Math.abs(5 - i) + Math.abs(1 - j) > 2)
                     _randomPoints.push(FlxPoint.get(i * Piece.SIZE, j * Piece.SIZE));
+        
+        _group = new FlxTypedGroup<Pellet>();
+        for (i in 0 ... 30)
+            _group.add(new Pellet());
+            
+        return _group;
     }
 }
