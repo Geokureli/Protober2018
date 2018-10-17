@@ -36,7 +36,7 @@
             , "type"         : "fdb"
             , "request"      : "launch"
             // , "preLaunchTask": "debug: flash"
-            , "program"      : "${workspaceRoot:Day12}/Export/flash/bin/Protober12.swf"
+            , "program"      : "${workspaceRoot:Day15}/Export/flash/bin/Protober15.swf"
             }
         ,   { "name"         : "Html5"
             , "type"         : "chrome"
@@ -44,13 +44,13 @@
             , "url"          : "http://127.0.0.1:3013"
             , "sourceMaps"   : true
             //, "preLaunchTask": "Html5 debug (build only)"
-            , "webRoot"      : "${workspaceFolder:Day12}"
+            , "webRoot"      : "${workspaceFolder:Day15}"
             }
         ,   { "name"         : "MacOS"
             , "type"         : "hxcpp"
             , "request"      : "launch"
             //, "preLaunchTask": "MacOS debug (build only)"
-            , "program"      : "${workspaceFolder:Day12}/Export/macos/bin/Protober12.app/Contents/MacOS/Protober12"
+            , "program"      : "${workspaceFolder:Day15}/Export/macos/bin/Protober15.app/Contents/MacOS/Protober15"
             }
         ]
     , "compounds": []
