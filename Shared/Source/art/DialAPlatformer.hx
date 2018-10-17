@@ -1,5 +1,6 @@
 package art;
 
+import flixel.math.FlxMath;
 import flixel.input.keyboard.FlxKey;
 import flixel.FlxG;
 import flixel.FlxObject;
@@ -7,51 +8,68 @@ import flixel.FlxObject;
 class DialAPlatformer extends flixel.FlxSprite { 
     
     /** The time you can jump after walking off a cliff (ACME tm) */
-    
     public var coyoteTime = 0.0;
+    /** Whether to apply drag when accelerating in the opposite direction of velocity. */
+    public var inverseDrag = true;
+    public var numAirJumps = 0;
     
     var _jumpVelocity:Float;
-    var _jumpUpTime:Float;
     var _moveAccel:Float;
     var _coyoteTimer = 0.0;
     var _jumpHoldTime = 0.0;
     var _jumpHoldTimer = 0.0;
+    var _numAirJumpsLeft = 0;
+    
+    var _airJumpVelocity = 0.0;
+    var _airJumpHoldTime = 0.0;
+    var _airJumpHoldTimer = 0.0;
     
     var _keys:Map<String, Array<FlxKey>> = new Map<String, Array<FlxKey>>();
     var _keyStates:Map<String, Bool> = new Map<String, Bool>();
     var _npcMode = false;
     
-    public function new (x:Float = 0, y:Float = 0, graphic = null) { super(x, y, graphic); }
-    
-    function setupJump(jumpHeight:Float, jumpUpTime:Float, maxFallRatio:Float = 0) {
-        
-        _jumpUpTime = jumpUpTime;
-        acceleration.y = 2 * jumpHeight / jumpUpTime / jumpUpTime;
-        _jumpVelocity = -2 * jumpHeight / jumpUpTime;
-        
-        if (maxFallRatio > 0)
-            maxVelocity.y = _jumpVelocity;
+    public function new (x:Float = 0, y:Float = 0, graphic = null) {
+        super(x, y, graphic);
         
         setKeys([FlxKey.A, FlxKey.LEFT], [FlxKey.D, FlxKey.RIGHT], [FlxKey.SPACE, FlxKey.W, FlxKey.UP]);
     }
     
-    function setupVariableJump(minJumpHeight:Float, maxJumpHeight:Float, minJumpUpTime:Float, maxFallRatio:Float = 0) {
+    function setupJump(height:Float, timeToApex:Float) {
         
-        _jumpUpTime = minJumpUpTime;
-        acceleration.y = 2 * minJumpHeight / minJumpUpTime / minJumpUpTime;
-        _jumpVelocity = -2 * minJumpHeight / minJumpUpTime;
+        acceleration.y = 2 * height / timeToApex / timeToApex;
+        _jumpVelocity = -2 * height / timeToApex;
+        _airJumpVelocity = _jumpVelocity;
+    }
+    
+    function setupVariableJump(minHeight:Float, maxHeight:Float, timeToApex:Float) {
         
-        _jumpHoldTime = (maxJumpHeight - minJumpHeight) / -_jumpVelocity;
+        setupJump(minHeight, timeToApex);
+        _jumpHoldTime = (maxHeight - minHeight) / -_jumpVelocity;
+        _airJumpHoldTime = _jumpHoldTime;
+    }
+    
+    function setupAirJump(height:Float) {
         
-        if (maxFallRatio > 0)
-            maxVelocity.y = _jumpVelocity;
+        //0 = v*v + 2*a*h
+        // --> v*v = -2(a*h)
+        // --> v = -Math.sqrt(2*a*h)
+        _airJumpVelocity = -Math.sqrt(2 * acceleration.y * height);
+        _airJumpHoldTime = 0;
+    }
+    
+    function setupVariableAirJump(minHeight:Float, maxHeight:Float) {
         
-        setKeys([FlxKey.A, FlxKey.LEFT], [FlxKey.D, FlxKey.RIGHT], [FlxKey.SPACE, FlxKey.W, FlxKey.UP]);
+        setupAirJump(minHeight);
+        _airJumpHoldTime = (maxHeight - minHeight) / -_airJumpVelocity;
     }
     
     function setupSpeed(jumpDistance:Float, speedUpTime:Float = 0.25, slowDownTime:Float = -1):Void {
         
-        maxVelocity.x = jumpDistance / _jumpUpTime / 2;
+        //0 = v + a * t
+        // --> -v = a*t
+        // --> -v/a = t
+        var jumpUpTime = -_jumpVelocity / acceleration.y;
+        maxVelocity.x = jumpDistance / jumpUpTime / 2;
         
         if(speedUpTime == 0)
             speedUpTime = 0.000001;
@@ -64,8 +82,6 @@ class DialAPlatformer extends flixel.FlxSprite {
         
         if (slowDownTime >= 0)
             drag.x = maxVelocity.x / slowDownTime;
-        
-        trace('speed:${maxVelocity.x} accel:$_moveAccel drag:${drag.x}');
     }
     
     function setKeys(left:Array<FlxKey>, right:Array<FlxKey>, jump:Array<FlxKey>):Void { 
@@ -81,7 +97,9 @@ class DialAPlatformer extends flixel.FlxSprite {
     
     override public function update(elapsed:Float):Void {
         
+        var justPressed = _keyStates['jump'];
         updateKeys();
+        justPressed = _keyStates['jump'] && !justPressed;
         
         acceleration.x = 0;
         
@@ -92,32 +110,64 @@ class DialAPlatformer extends flixel.FlxSprite {
         if (isTouching(FlxObject.FLOOR))
             _coyoteTimer = 0;
         
-        _jumpHoldTimer += elapsed;
-        if (getOnCoyoteGround())
+        if (getOnCoyoteGround()) {
+            
             _jumpHoldTimer = 0;
-        else if (!_keyStates['jump'])
-            _jumpHoldTimer = _jumpHoldTime;
+            _numAirJumpsLeft = numAirJumps;
+            
+        } else if (!_keyStates['jump']) {
+            
+            _jumpHoldTimer = _jumpHoldTime + 1;
+            _airJumpHoldTimer = _airJumpHoldTime + 1;
+        }
         
-        if (_keyStates['jump'] && getCanJump())
-            jump();
-        
+        var log = false;
+        if (_keyStates['jump']) {
+            
+            if (getOnCoyoteGround()) {
+                // Start jump
+                
+                jump(true);
+                _coyoteTimer = coyoteTime;
+                _jumpHoldTimer = 0;
+                _airJumpHoldTimer = _airJumpHoldTime + 1.0;
+                
+            } else if (_jumpHoldTimer <= _jumpHoldTime) {
+                // Maintain jump (key held)
+                
+                jump(false);
+                _jumpHoldTimer += elapsed;
+                
+            } else if (_numAirJumpsLeft > 0 && justPressed) {
+                // Start air jump
+                
+                airJump(true);
+                _airJumpHoldTimer = 0;
+                _numAirJumpsLeft--;
+                
+            } else if (_airJumpHoldTimer <= _airJumpHoldTime) {
+                // Maintain air jump (key held)
+                
+                airJump(false);
+                _airJumpHoldTimer += elapsed;
+            }
+        }
         super.update(elapsed);
     }
     
-    function getOnCoyoteGround():Bool {
+    inline function getOnCoyoteGround():Bool {
         
         return _coyoteTimer < coyoteTime || isTouching(FlxObject.FLOOR);
     }
     
-    function getCanJump():Bool {
-        
-        return getOnCoyoteGround() || _jumpHoldTimer <= _jumpHoldTime;
-    }
-    
-    function jump() {
+    function jump(justPressed:Bool) {
         
         velocity.y = _jumpVelocity;
-        _coyoteTimer = coyoteTime;
+    }
+    
+    function airJump(justPressed:Bool) {
+        
+        velocity.y = _airJumpVelocity;
     }
     
     function updateKeys():Void {
@@ -128,5 +178,72 @@ class DialAPlatformer extends flixel.FlxSprite {
             _keyStates['right'] = FlxG.keys.anyPressed(_keys['right']);
             _keyStates['jump' ] = FlxG.keys.anyPressed(_keys['jump' ]);
         }
+    }
+    // --- --- --- --- --- ---
+    // ---  HACKS, IGNORE  ---
+    // --- --- --- --- --- ---
+    
+    override function updateMotion(elapsed:Float) { 
+        
+        if(inverseDrag)
+            updateMotionInverseDrag(elapsed);
+        else
+            super.updateMotion(elapsed);
+    }
+    
+    inline function updateMotionInverseDrag(elapsed:Float) {
+        
+        var velocityDelta = 0.5 * (computeVelocity(angularVelocity, angularAcceleration, angularDrag, maxAngular, elapsed) - angularVelocity);
+        angularVelocity += velocityDelta; 
+        angle += angularVelocity * elapsed;
+        angularVelocity += velocityDelta;
+        
+        velocityDelta = 0.5 * (computeVelocity(velocity.x, acceleration.x, drag.x, maxVelocity.x, elapsed) - velocity.x);
+        velocity.x += velocityDelta;
+        x += velocity.x * elapsed;
+        velocity.x += velocityDelta;
+        
+        velocityDelta = 0.5 * (computeVelocity(velocity.y, acceleration.y, drag.y, maxVelocity.y, elapsed) - velocity.y);
+        velocity.y += velocityDelta;
+        y += velocity.y * elapsed;
+        velocity.y += velocityDelta;
+    }
+    
+    public static function computeVelocity(velocity:Float, acceleration:Float, drag:Float, max:Float, elapsed:Float):Float
+    {
+        if (acceleration != 0)
+        {
+            velocity += acceleration * elapsed;
+        }
+        
+        if (drag != 0 && (acceleration == 0 || !FlxMath.sameSign(velocity, acceleration)))
+        {
+            var drag:Float = drag * elapsed;
+            if (velocity - drag > 0)
+            {
+                velocity -= drag;
+            }
+            else if (velocity + drag < 0)
+            {
+                velocity += drag;
+            }
+            else
+            {
+                velocity = 0;
+            }
+        }
+        
+        if ((velocity != 0) && (max != 0))
+        {
+            if (velocity > max)
+            {
+                velocity = max;
+            }
+            else if (velocity < -max)
+            {
+                velocity = -max;
+            }
+        }
+        return velocity;
     }
 }
