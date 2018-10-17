@@ -1,5 +1,6 @@
 { "folders": 
-    [ { "path": "Day15" }
+    [ { "path": "Day17" }
+    , { "path": "Day15" }
     , { "path": "Day12" }
     , { "path": "Day10" }
     , { "path": "Day09" }
@@ -36,7 +37,7 @@
             , "type"         : "fdb"
             , "request"      : "launch"
             // , "preLaunchTask": "debug: flash"
-            , "program"      : "${workspaceRoot:Day15}/Export/flash/bin/Protober15.swf"
+            , "program"      : "${workspaceRoot:Day17}/Export/flash/bin/Protober17.swf"
             }
         ,   { "name"         : "Html5"
             , "type"         : "chrome"
@@ -44,13 +45,13 @@
             , "url"          : "http://127.0.0.1:3013"
             , "sourceMaps"   : true
             //, "preLaunchTask": "Html5 debug (build only)"
-            , "webRoot"      : "${workspaceFolder:Day15}"
+            , "webRoot"      : "${workspaceFolder:Day17}"
             }
         ,   { "name"         : "MacOS"
             , "type"         : "hxcpp"
             , "request"      : "launch"
             //, "preLaunchTask": "MacOS debug (build only)"
-            , "program"      : "${workspaceFolder:Day15}/Export/macos/bin/Protober15.app/Contents/MacOS/Protober15"
+            , "program"      : "${workspaceFolder:Day17}/Export/macos/bin/Protober17.app/Contents/MacOS/Protober17"
             }
         ]
     , "compounds": []
