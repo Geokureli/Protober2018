@@ -17,7 +17,7 @@
     <!-- _________________________ WINDOW SETTINGS _________________________ -->
     
     <!--These window settings apply to all targets-->
-    <window width="320" height="480" fps="60" background="#3F3F74" hardware="true" vsync="true" />
+    <window width="640" height="480" fps="60" background="#3F3F74" hardware="true" vsync="true" />
     
     <!--Web-specific-->
     <window if="html5" orientation="landscape" />

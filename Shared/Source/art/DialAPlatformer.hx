@@ -13,22 +13,32 @@ class DialAPlatformer extends flixel.FlxSprite {
     public var inverseDrag = true;
     public var numAirJumps = 0;
     
+    var _groundAcceleration:Float;
+    var _groundDrag:Float;
+    var _airAcceleration:Float;
+    var _airDrag:Float;
+    
     var _jumpVelocity:Float;
-    var _moveAccel:Float;
-    var _coyoteTimer = 0.0;
     var _jumpHoldTime = 0.0;
     var _jumpHoldTimer = 0.0;
-    var _numAirJumpsLeft = 0;
+    var _coyoteTimer = 0.0;
     
+    var _numAirJumpsLeft = 0;
     var _airJumpVelocity = 0.0;
     var _airJumpHoldTime = 0.0;
     var _airJumpHoldTimer = 0.0;
+    
+    var _wallJumpVelocity = 0.0;
+    var _wallJumpHoldTime = 0.0;
+    var _wallJumpHoldTimer = 0.0;
+    var _wallJumpXVelocity =-1.0;
+    var _wallJumpXHold =-1.0;
     
     var _keys:Map<String, Array<FlxKey>> = new Map<String, Array<FlxKey>>();
     var _keyStates:Map<String, Bool> = new Map<String, Bool>();
     var _npcMode = false;
     
-    public function new (x:Float = 0, y:Float = 0, graphic = null) {
+    public function new (x = 0.0, y = 0.0, graphic = null) {
         super(x, y, graphic);
         
         setKeys([FlxKey.A, FlxKey.LEFT], [FlxKey.D, FlxKey.RIGHT], [FlxKey.SPACE, FlxKey.W, FlxKey.UP]);
@@ -63,7 +73,13 @@ class DialAPlatformer extends flixel.FlxSprite {
         _airJumpHoldTime = (maxHeight - minHeight) / -_airJumpVelocity;
     }
     
-    function setupSpeed(jumpDistance:Float, speedUpTime:Float = 0.25, slowDownTime:Float = -1):Void {
+    function setupSpeed
+    ( jumpDistance   :Float
+    , speedUpTime     = 0.25
+    , airSpeedUpTime  = -1.0
+    , slowDownTime    = -1.0
+    , airSlowDownTime = -1.0
+    ):Void {
         
         //0 = v + a * t
         // --> -v = a*t
@@ -71,17 +87,43 @@ class DialAPlatformer extends flixel.FlxSprite {
         var jumpUpTime = -_jumpVelocity / acceleration.y;
         maxVelocity.x = jumpDistance / jumpUpTime / 2;
         
+        // Default(Ground) speed
         if(speedUpTime == 0)
             speedUpTime = 0.000001;
-        _moveAccel = maxVelocity.x / speedUpTime;
+        _groundAcceleration = maxVelocity.x / speedUpTime;
         
-        if (slowDownTime <= 0)
+        // Default(Ground) drag
+        if (slowDownTime < 0)
             slowDownTime = speedUpTime;
         else if (slowDownTime == 0)
             slowDownTime = 0.000001;
         
-        if (slowDownTime >= 0)
-            drag.x = maxVelocity.x / slowDownTime;
+        if (slowDownTime == Math.POSITIVE_INFINITY)
+            _groundDrag = 0;
+        else if (slowDownTime >= 0)
+            _groundDrag = maxVelocity.x / slowDownTime;
+        
+        // Air speed
+        if (airSpeedUpTime < 0)
+            airSpeedUpTime = speedUpTime;
+        else if (airSpeedUpTime == 0)
+            airSpeedUpTime = 0.000001;
+        
+        if (airSpeedUpTime == Math.POSITIVE_INFINITY)
+            _airAcceleration = 0;
+        else
+            _airAcceleration = maxVelocity.x / airSpeedUpTime;
+        
+        // Air drag
+        if (airSlowDownTime < 0)
+            airSlowDownTime = airSpeedUpTime;
+        else if (airSlowDownTime == 0)
+            airSlowDownTime = 0.000001;
+        
+        if (airSlowDownTime == Math.POSITIVE_INFINITY)
+            _airDrag = 0;
+        else if (airSlowDownTime >= 0)
+            _airDrag = maxVelocity.x / airSlowDownTime;
     }
     
     function setKeys(left:Array<FlxKey>, right:Array<FlxKey>, jump:Array<FlxKey>):Void { 
@@ -101,10 +143,11 @@ class DialAPlatformer extends flixel.FlxSprite {
         updateKeys();
         justPressed = _keyStates['jump'] && !justPressed;
         
-        acceleration.x = 0;
-        
-        if (_keyStates['left' ]) acceleration.x = -_moveAccel;
-        if (_keyStates['right']) acceleration.x =  _moveAccel;
+        // Determine direction, set acceleration after jump
+        var accellSign = 0.0;
+        if (_keyStates['left' ]) accellSign = -1;
+        if (_keyStates['right']) accellSign =  1;
+        var currentAcceleration = 0.0;
         
         _coyoteTimer += elapsed;
         if (isTouching(FlxObject.FLOOR))
@@ -114,11 +157,19 @@ class DialAPlatformer extends flixel.FlxSprite {
             
             _jumpHoldTimer = 0;
             _numAirJumpsLeft = numAirJumps;
+            drag.x = _groundDrag;
+            currentAcceleration = _groundAcceleration;
             
-        } else if (!_keyStates['jump']) {
+        } else {
             
-            _jumpHoldTimer = _jumpHoldTime + 1;
-            _airJumpHoldTimer = _airJumpHoldTime + 1;
+            drag.x = _airDrag;
+            currentAcceleration = _airAcceleration;
+            
+            if (!_keyStates['jump']) {
+                
+                _jumpHoldTimer = _jumpHoldTime + 1;
+                _airJumpHoldTimer = _airJumpHoldTime + 1;
+            }
         }
         
         var log = false;
@@ -129,7 +180,7 @@ class DialAPlatformer extends flixel.FlxSprite {
                 
                 jump(true);
                 _coyoteTimer = coyoteTime;
-                _jumpHoldTimer = 0;
+                _jumpHoldTimer = elapsed;
                 _airJumpHoldTimer = _airJumpHoldTime + 1.0;
                 
             } else if (_jumpHoldTimer <= _jumpHoldTime) {
@@ -138,11 +189,12 @@ class DialAPlatformer extends flixel.FlxSprite {
                 jump(false);
                 _jumpHoldTimer += elapsed;
                 
+                
             } else if (_numAirJumpsLeft > 0 && justPressed) {
                 // Start air jump
                 
                 airJump(true);
-                _airJumpHoldTimer = 0;
+                _airJumpHoldTimer = elapsed;
                 _numAirJumpsLeft--;
                 
             } else if (_airJumpHoldTimer <= _airJumpHoldTime) {
@@ -152,6 +204,10 @@ class DialAPlatformer extends flixel.FlxSprite {
                 _airJumpHoldTimer += elapsed;
             }
         }
+        
+        // Horizontal movement
+        acceleration.x = accellSign * currentAcceleration;
+        
         super.update(elapsed);
     }
     

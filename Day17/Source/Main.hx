@@ -66,7 +66,7 @@ class GameState extends flixel.FlxState {
         _level.initWorld();
         
         // Create _player
-        add(_player = new Hero(40, 8));
+        add(_player = new Hero(12, 12));
         FlxG.camera.follow(_player, FlxCameraFollowStyle.PLATFORMER);
     }
     
