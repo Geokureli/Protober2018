@@ -59,16 +59,15 @@ class EditorLevel extends flixel.tile.FlxTilemap {
         return _save.flush();
     }
     
+    function saveCsvToClipboard() {
+        
+        openfl.system.System.setClipboard(getCsv());
+    }
+    
     function saveCurrentCsv():Bool {
         
-        if (_save == null)
-            return false;
-        
-        var csv = getCsv();
-        openfl.system.System.setClipboard(csv);
-        
         if (_mapName != null)
-            return saveCsv(_mapName, csv);
+            return saveCsv(_mapName, getCsv());
         
         return false;
     }
@@ -131,6 +130,9 @@ class EditorLevel extends flixel.tile.FlxTilemap {
         
         if (!_editingEnabled)
             return;
+        
+        if (FlxG.keys.justReleased.C)
+            saveCsvToClipboard();
         
         if ((!FlxG.mouse.justPressed && !FlxG.mouse.justReleased && !_drawing)
         || (_drawing && !FlxG.mouse.justMoved && !FlxG.mouse.justReleased))
