@@ -28,6 +28,12 @@ class DialAPlatformer extends flixel.FlxSprite {
     var _airJumpHoldTime = 0.0;
     var _airJumpHoldTimer = 0.0;
     
+    var _wallJumpVelocity = 0.0;
+    var _wallJumpHoldTime = 0.0;
+    var _wallJumpHoldTimer = 0.0;
+    var _wallJumpXHoldTime = -1.0;
+    var _wallJumpXHoldTimer = 0.0;
+    
     var _keys:Map<String, Array<FlxKey>> = new Map<String, Array<FlxKey>>();
     var _keyStates:Map<String, Bool> = new Map<String, Bool>();
     var _npcMode = false;
@@ -67,6 +73,27 @@ class DialAPlatformer extends flixel.FlxSprite {
         _airJumpHoldTime = (maxHeight - minHeight) / -_airJumpVelocity;
     }
     
+    function setupWallJump(height:Float, width = -1.0) {
+        
+        _wallJumpVelocity = -Math.sqrt(2 * acceleration.y * height);
+        _wallJumpHoldTime = 0;
+        
+        if (width < 0) {
+            
+            var timeToApex = -_wallJumpVelocity / acceleration.y;
+            _wallJumpXHoldTime = _wallJumpHoldTime;
+        } else
+            _wallJumpXHoldTime = width / maxVelocity.x;
+        
+        trace(_wallJumpXHoldTime);
+    }
+    
+    function setupVariableWallJump(minHeight:Float, maxHeight:Float, width:Float) {
+        
+        setupWallJump(minHeight, width);
+        _wallJumpHoldTime = (maxHeight - minHeight) / -_wallJumpVelocity;
+    }
+    
     function setupSpeed
     ( jumpDistance   :Float
     , speedUpTime     = 0.25
@@ -78,8 +105,8 @@ class DialAPlatformer extends flixel.FlxSprite {
         //0 = v + a * t
         // --> -v = a*t
         // --> -v/a = t
-        var jumpUpTime = -_jumpVelocity / acceleration.y;
-        maxVelocity.x = jumpDistance / jumpUpTime / 2;
+        var timeToApex = -_jumpVelocity / acceleration.y;
+        maxVelocity.x = jumpDistance / timeToApex / 2;
         
         // Default(Ground) speed
         if(speedUpTime == 0)
@@ -138,31 +165,37 @@ class DialAPlatformer extends flixel.FlxSprite {
         justPressed = _keyStates['jump'] && !justPressed;
         
         // Determine direction, set acceleration after jump
-        var accellSign = 0.0;
-        if (_keyStates['left' ]) accellSign = -1;
-        if (_keyStates['right']) accellSign =  1;
         var currentAcceleration = 0.0;
+        var accelSign;
+        if (_wallJumpXHoldTimer < _wallJumpXHoldTime)
+            accelSign = FlxMath.signOf(velocity.x);
+        else
+            accelSign = (_keyStates['right'] ? 1 : 0) - (_keyStates['left'] ? 1 : 0);
         
         _coyoteTimer += elapsed;
         if (isTouching(FlxObject.FLOOR))
             _coyoteTimer = 0;
         
+        // Ground VS air status
         if (getOnCoyoteGround()) {
             
             _jumpHoldTimer = 0;
             _numAirJumpsLeft = numAirJumps;
             drag.x = _groundDrag;
             currentAcceleration = _groundAcceleration;
+            _wallJumpXHoldTimer = _wallJumpXHoldTime + 1;
             
         } else {
             
             drag.x = _airDrag;
             currentAcceleration = _airAcceleration;
+            _wallJumpXHoldTimer += elapsed;
             
             if (!_keyStates['jump']) {
                 
                 _jumpHoldTimer = _jumpHoldTime + 1;
                 _airJumpHoldTimer = _airJumpHoldTime + 1;
+                _wallJumpHoldTimer = _wallJumpHoldTime + 1;
             }
         }
         
@@ -174,7 +207,7 @@ class DialAPlatformer extends flixel.FlxSprite {
                 
                 jump(true);
                 _coyoteTimer = coyoteTime;
-                _jumpHoldTimer = elapsed;
+                _jumpHoldTimer = 0;//elapsed;
                 _airJumpHoldTimer = _airJumpHoldTime + 1.0;
                 
             } else if (_jumpHoldTimer <= _jumpHoldTime) {
@@ -183,12 +216,26 @@ class DialAPlatformer extends flixel.FlxSprite {
                 jump(false);
                 _jumpHoldTimer += elapsed;
                 
+            } else if (justPressed && isLeaningOnWall(accelSign)) {
+                // Start wall jump
                 
-            } else if (_numAirJumpsLeft > 0 && justPressed) {
+                wallJump(true);
+                _wallJumpHoldTimer = 0;
+                _wallJumpXHoldTimer = 0;
+                accelSign *= -1;
+                velocity.x = maxVelocity.x * accelSign;
+                
+            } else if (_wallJumpHoldTimer <= _wallJumpHoldTime) {
+                // Maintain wall jump
+                
+                wallJump(false);
+                _wallJumpHoldTimer += elapsed;
+                
+            } else if (justPressed && _numAirJumpsLeft > 0) {
                 // Start air jump
                 
                 airJump(true);
-                _airJumpHoldTimer = elapsed;
+                _airJumpHoldTimer = 0;
                 _numAirJumpsLeft--;
                 
             } else if (_airJumpHoldTimer <= _airJumpHoldTime) {
@@ -200,7 +247,7 @@ class DialAPlatformer extends flixel.FlxSprite {
         }
         
         // Horizontal movement
-        acceleration.x = accellSign * currentAcceleration;
+        acceleration.x = accelSign * currentAcceleration;
         
         super.update(elapsed);
     }
@@ -208,6 +255,11 @@ class DialAPlatformer extends flixel.FlxSprite {
     inline function getOnCoyoteGround():Bool {
         
         return _coyoteTimer < coyoteTime || isTouching(FlxObject.FLOOR);
+    }
+    
+    function isLeaningOnWall(accellSign:Float):Bool {
+        return (isTouching(FlxObject.RIGHT) && accellSign > 0)
+            || (isTouching(FlxObject.LEFT ) && accellSign < 0);
     }
     
     function jump(justPressed:Bool) {
@@ -218,6 +270,12 @@ class DialAPlatformer extends flixel.FlxSprite {
     function airJump(justPressed:Bool) {
         
         velocity.y = _airJumpVelocity;
+    }
+    
+    function wallJump(justPressed:Bool) {
+        
+        velocity.y = _wallJumpVelocity;
+        trace(_wallJumpVelocity);
     }
     
     function updateKeys():Void {

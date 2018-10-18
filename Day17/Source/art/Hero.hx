@@ -12,6 +12,7 @@ class Hero extends DialAPlatformer {
         setupVariableJump(TILE_SIZE * 3.25, TILE_SIZE * 6.25, .35);
         setupVariableAirJump(TILE_SIZE * 1.25, TILE_SIZE * 3.25);
         setupSpeed(TILE_SIZE * 8, .25);
+        setupWallJump(TILE_SIZE * 3.25, TILE_SIZE * 3);
         coyoteTime = .1;
         numAirJumps = 4;
     }
