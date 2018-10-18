@@ -28,12 +28,6 @@ class DialAPlatformer extends flixel.FlxSprite {
     var _airJumpHoldTime = 0.0;
     var _airJumpHoldTimer = 0.0;
     
-    var _wallJumpVelocity = 0.0;
-    var _wallJumpHoldTime = 0.0;
-    var _wallJumpHoldTimer = 0.0;
-    var _wallJumpXVelocity =-1.0;
-    var _wallJumpXHold =-1.0;
-    
     var _keys:Map<String, Array<FlxKey>> = new Map<String, Array<FlxKey>>();
     var _keyStates:Map<String, Bool> = new Map<String, Bool>();
     var _npcMode = false;
