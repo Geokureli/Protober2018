@@ -5,13 +5,21 @@ import flixel.input.keyboard.FlxKey;
 import flixel.FlxG;
 import flixel.FlxObject;
 
-class DialAPlatformer extends flixel.FlxSprite { 
+class DialAPlatformer extends flixel.FlxSprite {
     
     /** The time you can jump after walking off a cliff (ACME tm) */
     public var coyoteTime = 0.0;
     /** Whether to apply drag when accelerating in the opposite direction of velocity. */
     public var inverseDrag = true;
     public var numAirJumps = 0;
+    /** Full speed change when accelerating in the opposite direction of velocity on ground jumps */
+    public var jumpDirectionChange = false;
+    /** Full speed change when accelerating in the opposite direction of velocity on air jumps */
+    public var airJumpDirectionChange = false;
+    /** If true, the player can hold jump forever to keep ground jumping */
+    public var allowSinglePressBounce = false;
+    /** If true, the player can hold jump forever to keep ground jumping */
+    public var autoApexAirJump = false;
     
     var _groundAcceleration:Float;
     var _groundDrag:Float;
@@ -19,20 +27,24 @@ class DialAPlatformer extends flixel.FlxSprite {
     var _airDrag:Float;
     
     var _jumpVelocity:Float;
-    var _jumpHoldTime = 0.0;
-    var _jumpHoldTimer = 0.0;
+    var _jumpTime = 0.0;
+    var _jumpTimer = Math.POSITIVE_INFINITY;
     var _coyoteTimer = 0.0;
     
     var _numAirJumpsLeft = 0;
     var _airJumpVelocity = 0.0;
-    var _airJumpHoldTime = 0.0;
-    var _airJumpHoldTimer = 0.0;
+    var _airJumpTime = 0.0;
+    var _airJumpTimer = Math.POSITIVE_INFINITY;
+    
+    var _skidJumpVelocity = 0.0;
+    var _skidJumpTime = 0.0;
+    var _skidJumpTimer = Math.POSITIVE_INFINITY;
     
     var _wallJumpVelocity = 0.0;
-    var _wallJumpHoldTime = 0.0;
-    var _wallJumpHoldTimer = 0.0;
-    var _wallJumpXHoldTime = -1.0;
-    var _wallJumpXHoldTimer = 0.0;
+    var _wallJumpTime = 0.0;
+    var _wallJumpTimer = Math.POSITIVE_INFINITY;
+    var _wallJumpXTime = -1.0;
+    var _wallJumpXTimer = Math.POSITIVE_INFINITY;
     
     var _keys:Map<String, Array<FlxKey>> = new Map<String, Array<FlxKey>>();
     var _keyStates:Map<String, Bool> = new Map<String, Bool>();
@@ -49,13 +61,22 @@ class DialAPlatformer extends flixel.FlxSprite {
         acceleration.y = 2 * height / timeToApex / timeToApex;
         _jumpVelocity = -2 * height / timeToApex;
         _airJumpVelocity = _jumpVelocity;
+        
+        log ( 'setupJump($height, $timeToApex)'
+            + '\n - gravity :${acceleration.y}'
+            + '\n - velocity:$_jumpVelocity'
+            );
     }
     
     function setupVariableJump(minHeight:Float, maxHeight:Float, timeToApex:Float) {
         
         setupJump(minHeight, timeToApex);
-        _jumpHoldTime = (maxHeight - minHeight) / -_jumpVelocity;
-        _airJumpHoldTime = _jumpHoldTime;
+        _jumpTime = (maxHeight - minHeight) / -_jumpVelocity;
+        _airJumpTime = _jumpTime;
+        
+        log ( 'setupVariableJump($minHeight, $maxHeight, $timeToApex)'
+            + '\n - holdTime:$_jumpTime'
+            );
     }
     
     function setupAirJump(height:Float) {
@@ -64,34 +85,68 @@ class DialAPlatformer extends flixel.FlxSprite {
         // --> v*v = -2(a*h)
         // --> v = -Math.sqrt(2*a*h)
         _airJumpVelocity = -Math.sqrt(2 * acceleration.y * height);
-        _airJumpHoldTime = 0;
+        _airJumpTime = 0;
+        
+        log ( 'setupAirJump($height)'
+            + '\n - velocity:$_airJumpVelocity'
+            );
     }
     
     function setupVariableAirJump(minHeight:Float, maxHeight:Float) {
         
         setupAirJump(minHeight);
-        _airJumpHoldTime = (maxHeight - minHeight) / -_airJumpVelocity;
+        _airJumpTime = (maxHeight - minHeight) / -_airJumpVelocity;
+        
+        log ( 'setupVariableAirJump($minHeight, $maxHeight)'
+            + '\n - holdTime:$_airJumpTime'
+            );
     }
     
     function setupWallJump(height:Float, width = -1.0) {
         
         _wallJumpVelocity = -Math.sqrt(2 * acceleration.y * height);
-        _wallJumpHoldTime = 0;
+        _wallJumpTime = 0;
         
         if (width < 0) {
             
             var timeToApex = -_wallJumpVelocity / acceleration.y;
-            _wallJumpXHoldTime = _wallJumpHoldTime;
+            _wallJumpXTime = _wallJumpTime;
         } else
-            _wallJumpXHoldTime = width / maxVelocity.x;
+            _wallJumpXTime = width / maxVelocity.x;
         
-        trace(_wallJumpXHoldTime);
+        log ( 'setupWallJump($height, $width)'
+            + '\n - velocity :$_wallJumpVelocity'
+            + '\n - xHoldTime:$_wallJumpXTime'
+            );
     }
     
     function setupVariableWallJump(minHeight:Float, maxHeight:Float, width:Float) {
         
         setupWallJump(minHeight, width);
-        _wallJumpHoldTime = (maxHeight - minHeight) / -_wallJumpVelocity;
+        _wallJumpTime = (maxHeight - minHeight) / -_wallJumpVelocity;
+        
+        log ( 'setupVariableAirJump($minHeight, $maxHeight, $width)'
+            + '\n - holdTime:$_wallJumpTime'
+            );
+    }
+    
+    function setupSkidJump(height:Float) {
+        
+        _skidJumpVelocity = -Math.sqrt(2 * acceleration.y * height);
+        
+        log ( 'setupSkidJump($height)'
+            + '\n - velocity:$_skidJumpVelocity'
+            );
+    }
+    
+    function setupVariableSkidJump(minHeight:Float, maxHeight:Float) {
+        
+        setupSkidJump(minHeight);
+        _skidJumpTime = (maxHeight - minHeight) / -_skidJumpVelocity;
+        
+        log ( 'setupSkidJump($minHeight, $maxHeight)'
+            + '\n - holdTime:$_skidJumpTime'
+            );
     }
     
     function setupSpeed
@@ -108,43 +163,36 @@ class DialAPlatformer extends flixel.FlxSprite {
         var timeToApex = -_jumpVelocity / acceleration.y;
         maxVelocity.x = jumpDistance / timeToApex / 2;
         
-        // Default(Ground) speed
-        if(speedUpTime == 0)
-            speedUpTime = 0.000001;
-        _groundAcceleration = maxVelocity.x / speedUpTime;
-        
-        // Default(Ground) drag
         if (slowDownTime < 0)
             slowDownTime = speedUpTime;
-        else if (slowDownTime == 0)
-            slowDownTime = 0.000001;
         
-        if (slowDownTime == Math.POSITIVE_INFINITY)
-            _groundDrag = 0;
-        else if (slowDownTime >= 0)
-            _groundDrag = maxVelocity.x / slowDownTime;
-        
-        // Air speed
         if (airSpeedUpTime < 0)
             airSpeedUpTime = speedUpTime;
-        else if (airSpeedUpTime == 0)
-            airSpeedUpTime = 0.000001;
         
-        if (airSpeedUpTime == Math.POSITIVE_INFINITY)
-            _airAcceleration = 0;
-        else
-            _airAcceleration = maxVelocity.x / airSpeedUpTime;
-        
-        // Air drag
         if (airSlowDownTime < 0)
             airSlowDownTime = airSpeedUpTime;
-        else if (airSlowDownTime == 0)
-            airSlowDownTime = 0.000001;
         
-        if (airSlowDownTime == Math.POSITIVE_INFINITY)
-            _airDrag = 0;
-        else if (airSlowDownTime >= 0)
-            _airDrag = maxVelocity.x / airSlowDownTime;
+        _groundAcceleration = getAccelerationFromTime(speedUpTime    );
+        _groundDrag         = getAccelerationFromTime(slowDownTime   );
+        _airAcceleration    = getAccelerationFromTime(airSpeedUpTime );
+        _airDrag            = getAccelerationFromTime(airSlowDownTime);
+        
+        log ( 'setupSpeed($jumpDistance, $speedUpTime, $airSpeedUpTime, $slowDownTime, $airSlowDownTime)'
+            + '\n - groundUp  :$_groundAcceleration'
+            + '\n - groundDown:$_groundDrag'
+            + '\n - airUp     :$_airAcceleration'
+            + '\n - airDown   :$_airDrag'
+            );
+    }
+    
+    inline function getAccelerationFromTime(time:Float, backupTime = -1.0):Float {
+        
+        if (time == 0)
+            time = 0.000001;
+        
+        return time == Math.POSITIVE_INFINITY
+            ? 0
+            : maxVelocity.x / time;
     }
     
     function setKeys(left:Array<FlxKey>, right:Array<FlxKey>, jump:Array<FlxKey>):Void { 
@@ -167,10 +215,12 @@ class DialAPlatformer extends flixel.FlxSprite {
         // Determine direction, set acceleration after jump
         var currentAcceleration = 0.0;
         var accelSign;
-        if (_wallJumpXHoldTimer < _wallJumpXHoldTime)
+        if (_wallJumpXTimer < _wallJumpXTime)
             accelSign = FlxMath.signOf(velocity.x);
         else
             accelSign = (_keyStates['right'] ? 1 : 0) - (_keyStates['left'] ? 1 : 0);
+        
+        var isSkidding = accelSign != 0 && velocity.x != 0 && !FlxMath.sameSign(velocity.x, accelSign);
         
         _coyoteTimer += elapsed;
         if (isTouching(FlxObject.FLOOR))
@@ -179,70 +229,96 @@ class DialAPlatformer extends flixel.FlxSprite {
         // Ground VS air status
         if (getOnCoyoteGround()) {
             
-            _jumpHoldTimer = 0;
             _numAirJumpsLeft = numAirJumps;
             drag.x = _groundDrag;
             currentAcceleration = _groundAcceleration;
-            _wallJumpXHoldTimer = _wallJumpXHoldTime + 1;
+            _wallJumpXTimer = _wallJumpXTime + 1;
             
         } else {
             
             drag.x = _airDrag;
             currentAcceleration = _airAcceleration;
-            _wallJumpXHoldTimer += elapsed;
+            _wallJumpXTimer += elapsed;
             
             if (!_keyStates['jump']) {
                 
-                _jumpHoldTimer = _jumpHoldTime + 1;
-                _airJumpHoldTimer = _airJumpHoldTime + 1;
-                _wallJumpHoldTimer = _wallJumpHoldTime + 1;
+                _jumpTimer = _jumpTime + 1;
+                _airJumpTimer = _airJumpTime + 1;
+                _wallJumpTimer = _wallJumpTime + 1;
+                _skidJumpTimer = _skidJumpTime + 1;
             }
         }
         
         var log = false;
         if (_keyStates['jump']) {
             
-            if (getOnCoyoteGround()) {
+            if (getOnCoyoteGround() && (justPressed || allowSinglePressBounce)) {
                 // Start jump
                 
-                jump(true);
-                _coyoteTimer = coyoteTime;
-                _jumpHoldTimer = 0;//elapsed;
-                _airJumpHoldTimer = _airJumpHoldTime + 1.0;
+                if (isSkidding) {
+                    
+                    if (jumpDirectionChange)
+                        velocity.x = accelSign * maxVelocity.x;
+                    
+                    if (_skidJumpVelocity != 0){
+                        
+                        skidJump(true);
+                        _skidJumpTimer = 0;
+                        _jumpTimer = _jumpTime + 1;
+                    }
+                    
+                } else {
+                    
+                    jump(true);
+                    _jumpTimer = 0;
+                    _skidJumpTimer = _skidJumpTime + 1;
+                }
                 
-            } else if (_jumpHoldTimer <= _jumpHoldTime) {
+                _coyoteTimer = coyoteTime;
+                _airJumpTimer = _airJumpTime + 1.0;
+                
+            } else if (_jumpTimer <= _jumpTime) {
                 // Maintain jump (key held)
                 
                 jump(false);
-                _jumpHoldTimer += elapsed;
+                _jumpTimer += elapsed;
                 
-            } else if (justPressed && isLeaningOnWall(accelSign)) {
+            }else if (_skidJumpTimer <= _skidJumpTime){
+                //maintain skid jump
+                
+                skidJump(false);
+                _skidJumpTimer += elapsed;
+                
+            } else if (justPressed && _wallJumpVelocity != 0 && isLeaningOnWall(accelSign)) {
                 // Start wall jump
                 
                 wallJump(true);
-                _wallJumpHoldTimer = 0;
-                _wallJumpXHoldTimer = 0;
+                _wallJumpTimer = 0;
+                _wallJumpXTimer = 0;
                 accelSign *= -1;
                 velocity.x = maxVelocity.x * accelSign;
                 
-            } else if (_wallJumpHoldTimer <= _wallJumpHoldTime) {
+            } else if (_wallJumpTimer <= _wallJumpTime) {
                 // Maintain wall jump
                 
                 wallJump(false);
-                _wallJumpHoldTimer += elapsed;
+                _wallJumpTimer += elapsed;
                 
-            } else if (justPressed && _numAirJumpsLeft > 0) {
+            } else if (_numAirJumpsLeft > 0 && _airJumpVelocity != 0 && (justPressed || (autoApexAirJump && velocity.y >= 0))) {
                 // Start air jump
                 
+                if (isSkidding && airJumpDirectionChange)
+                    velocity.x = accelSign * maxVelocity.x;
+                
                 airJump(true);
-                _airJumpHoldTimer = 0;
+                _airJumpTimer = 0;
                 _numAirJumpsLeft--;
                 
-            } else if (_airJumpHoldTimer <= _airJumpHoldTime) {
+            } else if (_airJumpTimer <= _airJumpTime) {
                 // Maintain air jump (key held)
                 
                 airJump(false);
-                _airJumpHoldTimer += elapsed;
+                _airJumpTimer += elapsed;
             }
         }
         
@@ -275,7 +351,11 @@ class DialAPlatformer extends flixel.FlxSprite {
     function wallJump(justPressed:Bool) {
         
         velocity.y = _wallJumpVelocity;
-        trace(_wallJumpVelocity);
+    }
+    
+    function skidJump(justPressed:Bool) {
+        
+        velocity.y = _skidJumpVelocity;
     }
     
     function updateKeys():Void {
@@ -287,6 +367,16 @@ class DialAPlatformer extends flixel.FlxSprite {
             _keyStates['jump' ] = FlxG.keys.anyPressed(_keys['jump' ]);
         }
     }
+    
+    /**
+     * Override me to log stuff
+     * @param msg Cool-speak for "Massage", I Think
+     */
+    function log(msg:String):Void {
+        
+        
+    }
+    
     // --- --- --- --- --- ---
     // ---  HACKS, IGNORE  ---
     // --- --- --- --- --- ---

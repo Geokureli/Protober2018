@@ -30,6 +30,8 @@ class Main extends openfl.display.Sprite {
             // , art.SplashState
             , GameState
             // , MenuState
+            , Std.int(stage.frameRate)
+            , Std.int(stage.frameRate)
             )
         );
     }
