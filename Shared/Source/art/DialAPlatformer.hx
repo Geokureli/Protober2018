@@ -7,10 +7,17 @@ import flixel.FlxObject;
 
 class DialAPlatformer extends flixel.FlxSprite {
     
+    /** logs jumps of all type, but only when they are started, not when maintained for variable jumps */
+    public var enableJumpLogs = false;
+    /** logs jumps of all type when they are maintained for variable jumps */
+    public var enableVerboseJumpLogs = false;
+    /** logs setup parameters when they change */
+    public var enableParamLogs = false;
     /** The time you can jump after walking off a cliff (ACME tm) */
     public var coyoteTime = 0.0;
     /** Whether to apply drag when accelerating in the opposite direction of velocity. */
-    public var inverseDrag = true;
+    public var skidDrag = true;
+    /** Number of times you can jump in the air without touching the ground */
     public var numAirJumps = 0;
     /** Full speed change when accelerating in the opposite direction of velocity on ground jumps */
     public var jumpDirectionChange = false;
@@ -18,8 +25,11 @@ class DialAPlatformer extends flixel.FlxSprite {
     public var airJumpDirectionChange = false;
     /** If true, the player can hold jump forever to keep ground jumping */
     public var allowSinglePressBounce = false;
-    /** If true, the player can hold jump forever to keep ground jumping */
+    /** If true, the player will air jump at the height of their jump, if air jumps are available */
     public var autoApexAirJump = false;
+    /** Whether the hero has to press inward to the wall to wall jump */
+    public var wallJumpLean = true;
+    
     
     var _groundAcceleration:Float;
     var _groundDrag:Float;
@@ -56,13 +66,19 @@ class DialAPlatformer extends flixel.FlxSprite {
         setKeys([FlxKey.A, FlxKey.LEFT], [FlxKey.D, FlxKey.RIGHT], [FlxKey.SPACE, FlxKey.W, FlxKey.UP]);
     }
     
+    /**
+     * Sets the jump arc by setting the gravity and jump velocity
+     * @param height        The desired jump height in pixels
+     * @param timeToApex    The time it takes to reach the top of the jump
+     */
     function setupJump(height:Float, timeToApex:Float) {
         
         acceleration.y = 2 * height / timeToApex / timeToApex;
         _jumpVelocity = -2 * height / timeToApex;
         _airJumpVelocity = _jumpVelocity;
         
-        log ( 'setupJump($height, $timeToApex)'
+        logParam
+            ( 'setupJump($height, $timeToApex)'
             + '\n - gravity :${acceleration.y}'
             + '\n - velocity:$_jumpVelocity'
             );
@@ -74,11 +90,16 @@ class DialAPlatformer extends flixel.FlxSprite {
         _jumpTime = (maxHeight - minHeight) / -_jumpVelocity;
         _airJumpTime = _jumpTime;
         
-        log ( 'setupVariableJump($minHeight, $maxHeight, $timeToApex)'
+        logParam
+            ( 'setupVariableJump($minHeight, $maxHeight, $timeToApex)'
             + '\n - holdTime:$_jumpTime'
             );
     }
     
+    /**
+     * Sets the air jump arc by setting the jump velocity based on gravity
+     * @param height    The desired jump height in pixels
+     */
     function setupAirJump(height:Float) {
         
         //0 = v*v + 2*a*h
@@ -87,21 +108,36 @@ class DialAPlatformer extends flixel.FlxSprite {
         _airJumpVelocity = -Math.sqrt(2 * acceleration.y * height);
         _airJumpTime = 0;
         
-        log ( 'setupAirJump($height)'
+        logParam
+            ( 'setupAirJump($height)'
             + '\n - velocity:$_airJumpVelocity'
             );
     }
     
+    /**
+     * Sets the air jump arc by setting the jump velocity and how long they can hold the jump button
+     * @param minHeight The desired jump height in pixels
+     * @param maxHeight The desired jump height in pixels
+     */
     function setupVariableAirJump(minHeight:Float, maxHeight:Float) {
         
         setupAirJump(minHeight);
         _airJumpTime = (maxHeight - minHeight) / -_airJumpVelocity;
         
-        log ( 'setupVariableAirJump($minHeight, $maxHeight)'
+        logParam
+            ( 'setupVariableAirJump($minHeight, $maxHeight)'
             + '\n - holdTime:$_airJumpTime'
             );
     }
     
+    
+    /**
+     * Sets the wall jump arc by setting the jump velocity based on gravity.
+     * Wall Jumps are performed by touching a wall while jumping
+     * @param height    The desired jump height in pixels
+     * @param width     How far they should jump away from the wall, in pixels.
+     *                  If set to -1 they will move away util the apex is reached
+     */
     function setupWallJump(height:Float, width = -1.0) {
         
         _wallJumpVelocity = -Math.sqrt(2 * acceleration.y * height);
@@ -114,41 +150,76 @@ class DialAPlatformer extends flixel.FlxSprite {
         } else
             _wallJumpXTime = width / maxVelocity.x;
         
-        log ( 'setupWallJump($height, $width)'
+        logParam
+            ( 'setupWallJump($height, $width)'
             + '\n - velocity :$_wallJumpVelocity'
             + '\n - xHoldTime:$_wallJumpXTime'
             );
     }
     
+    /**
+     * Sets the wall jump arc by setting the jump velocity and how long they can hold the jump button.
+     * Wall Jumps are performed by touching a wall while jumping
+     * @param minHeight The desired jump height in pixels
+     * @param maxHeight The desired jump height in pixels
+     * @param width     How far they should jump away from the wall, in pixels.
+     *                  If set to -1 they will move away util the minimum apex
+     *                  would have been reached
+     */
     function setupVariableWallJump(minHeight:Float, maxHeight:Float, width:Float) {
         
         setupWallJump(minHeight, width);
         _wallJumpTime = (maxHeight - minHeight) / -_wallJumpVelocity;
         
-        log ( 'setupVariableAirJump($minHeight, $maxHeight, $width)'
+        logParam
+            ( 'setupVariableAirJump($minHeight, $maxHeight, $width)'
             + '\n - holdTime:$_wallJumpTime'
             );
     }
     
+    /**
+     * Sets the skid jump arc by setting the jump velocity based on gravity.
+     * Skid jumps are performed by jumping while changing direction.
+     * @param height    The desired jump height in pixels
+     */
     function setupSkidJump(height:Float) {
         
         _skidJumpVelocity = -Math.sqrt(2 * acceleration.y * height);
         
-        log ( 'setupSkidJump($height)'
+        logParam
+            ( 'setupSkidJump($height)'
             + '\n - velocity:$_skidJumpVelocity'
             );
     }
     
+    /**
+     * Sets the air jump arc by setting the jump velocity and how long they can hold the jump button.
+     * Skid jumps are performed by jumping while changing direction.
+     * @param minHeight The desired jump height in pixels
+     * @param maxHeight The desired jump height in pixels
+     */
     function setupVariableSkidJump(minHeight:Float, maxHeight:Float) {
         
         setupSkidJump(minHeight);
         _skidJumpTime = (maxHeight - minHeight) / -_skidJumpVelocity;
         
-        log ( 'setupSkidJump($minHeight, $maxHeight)'
+        logParam
+            ( 'setupSkidJump($minHeight, $maxHeight)'
             + '\n - holdTime:$_skidJumpTime'
             );
     }
     
+    /**
+     * Sets the hero speed based on how far you want him to jump.
+     * @param jumpDistance      The distance the hero can clear using their normal jump (maxHeight).
+     * @param speedUpTime       How long it takes to go from full stop to full speed on the ground.
+     * @param airSpeedUpTime    How long it takes to go from full stop to full speed run in the air.
+     *                          If set to -1, speedUpTime is used.
+     * @param slowDownTime      How long it takes to go from full speed run to a full stop on the ground.
+     *                          If set to -1, speedUpTime is used.
+     * @param airSlowDownTime   How long it takes to go from full speed run to a full stop in the air.
+     *                          If set to -1, airSpeedUpTime is used.
+     */
     function setupSpeed
     ( jumpDistance   :Float
     , speedUpTime     = 0.25
@@ -160,7 +231,7 @@ class DialAPlatformer extends flixel.FlxSprite {
         //0 = v + a * t
         // --> -v = a*t
         // --> -v/a = t
-        var timeToApex = -_jumpVelocity / acceleration.y;
+        var timeToApex = -_jumpVelocity / acceleration.y + _jumpTime;
         maxVelocity.x = jumpDistance / timeToApex / 2;
         
         if (slowDownTime < 0)
@@ -177,7 +248,8 @@ class DialAPlatformer extends flixel.FlxSprite {
         _airAcceleration    = getAccelerationFromTime(airSpeedUpTime );
         _airDrag            = getAccelerationFromTime(airSlowDownTime);
         
-        log ( 'setupSpeed($jumpDistance, $speedUpTime, $airSpeedUpTime, $slowDownTime, $airSlowDownTime)'
+        logParam
+            ( 'setupSpeed($jumpDistance, $speedUpTime, $airSpeedUpTime, $slowDownTime, $airSlowDownTime)'
             + '\n - groundUp  :$_groundAcceleration'
             + '\n - groundDown:$_groundDrag'
             + '\n - airUp     :$_airAcceleration'
@@ -195,7 +267,10 @@ class DialAPlatformer extends flixel.FlxSprite {
             : maxVelocity.x / time;
     }
     
-    function setKeys(left:Array<FlxKey>, right:Array<FlxKey>, jump:Array<FlxKey>):Void { 
+    /**
+     * Sets which keys perform various actions
+     */
+    public function setKeys(left:Array<FlxKey>, right:Array<FlxKey>, jump:Array<FlxKey>):Void { 
         
         _keys['left' ] = left;
         _keys['right'] = right;
@@ -341,21 +416,26 @@ class DialAPlatformer extends flixel.FlxSprite {
     function jump(justPressed:Bool) {
         
         velocity.y = _jumpVelocity;
+        
+        logJump(justPressed, 'jump $justPressed $_jumpTimer < $_jumpTime');
     }
     
     function airJump(justPressed:Bool) {
         
         velocity.y = _airJumpVelocity;
+        logJump(justPressed, 'air jump $justPressed $_jumpTimer < $_airJumpTime');
     }
     
     function wallJump(justPressed:Bool) {
         
         velocity.y = _wallJumpVelocity;
+        logJump(justPressed, 'wall jump $justPressed $_jumpTimer < $_wallJumpTime');
     }
     
     function skidJump(justPressed:Bool) {
         
         velocity.y = _skidJumpVelocity;
+        logJump(justPressed, 'skid jump $justPressed $_jumpTimer < $_skidJumpTime');
     }
     
     function updateKeys():Void {
@@ -368,13 +448,12 @@ class DialAPlatformer extends flixel.FlxSprite {
         }
     }
     
-    /**
-     * Override me to log stuff
-     * @param msg Cool-speak for "Massage", I Think
-     */
-    function log(msg:String):Void {
+    inline function log(msg:String):Void { trace (msg); }
+    inline function logParam(msg:String):Void { if (enableParamLogs) log(msg); }
+    inline function logJump(justTouched:Bool, msg:String):Void {
         
-        
+        if ((enableVerboseJumpLogs && !justTouched) || enableJumpLogs)
+            log(msg);
     }
     
     // --- --- --- --- --- ---
@@ -383,13 +462,13 @@ class DialAPlatformer extends flixel.FlxSprite {
     
     override function updateMotion(elapsed:Float) { 
         
-        if(inverseDrag)
-            updateMotionInverseDrag(elapsed);
+        if(skidDrag)
+            updateMotionSkidDrag(elapsed);
         else
             super.updateMotion(elapsed);
     }
     
-    inline function updateMotionInverseDrag(elapsed:Float) {
+    inline function updateMotionSkidDrag(elapsed:Float) {
         
         var velocityDelta = 0.5 * (computeVelocity(angularVelocity, angularAcceleration, angularDrag, maxAngular, elapsed) - angularVelocity);
         angularVelocity += velocityDelta; 

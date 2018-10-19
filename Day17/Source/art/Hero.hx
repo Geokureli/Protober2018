@@ -12,7 +12,7 @@ class Hero extends DialAPlatformer {
         makeGraphic(12, 18, 0xFF6ABE30);
         
         // setupVariableJump(TILE_SIZE * 3.25, TILE_SIZE * 6.25, .35);
-        setupJump(TILE_SIZE * 3.25, .35);
+        setupJump(TILE_SIZE * 6.25, .35);
         setupVariableAirJump(TILE_SIZE * 1.25, TILE_SIZE * 3.25);
         setupSpeed(TILE_SIZE * 8, .25);
         //setupWallJump(TILE_SIZE * 3.25, TILE_SIZE * 3);
@@ -21,7 +21,8 @@ class Hero extends DialAPlatformer {
         jumpDirectionChange = true;
         airJumpDirectionChange = true;
         numAirJumps = 1;
-        inverseDrag = false;
+        autoApexAirJump = true;
+        skidDrag = false;
     }
     
     override function update(elapsed:Float) {
@@ -29,7 +30,7 @@ class Hero extends DialAPlatformer {
         
         if (velocity.y >= 0) {
             
-            if (y + 0.5 < _startY)
+            if (y + 1 < _startY)
                 trace('${_startY - y}');
             
             _startY = y;
@@ -39,29 +40,8 @@ class Hero extends DialAPlatformer {
     override function jump(justPressed:Bool) {
         
         super.jump(justPressed);
-        // trace('jump $justPressed $_jumpTimer < $_jumpTime');
         
         if(justPressed)
             _startY = y;
-    }
-    override function airJump(justPressed:Bool) {
-        
-        super.airJump(justPressed);
-        // trace('air jump $justPressed $_jumpTimer < $_airJumpTime');
-    }
-    override function wallJump(justPressed:Bool) {
-        
-        super.wallJump(justPressed);
-        // trace('wall jump $justPressed $_jumpTimer < $_wallJumpTime');
-    }
-    override function skidJump(justPressed:Bool) {
-        
-        super.skidJump(justPressed);
-        // trace('skid jump $justPressed $_jumpTimer < $_skidJumpTime');
-    }
-    
-    override function log(msg:String) {
-        
-        trace(msg);
     }
 }
