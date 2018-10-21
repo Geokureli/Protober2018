@@ -35,6 +35,7 @@
     <classpath name="../Shared/Source"/>
     <assets path="Assets"           rename="assets"       exclude="*.wav|*.ogg|*.xml|*.db|*.aseprite" />
     <assets path="../Shared/Assets" rename="sharedAssets" exclude="*.wav|*.ogg|*.xml|*.db|*.aseprite" />
+    <library path="Assets/Layout.bundle" id="layout" preload="true" />
     
     <app path="Export" />
     

@@ -2,12 +2,20 @@ package;
 
 import art.Level;
 import art.Hero;
-import flixel.FlxCamera.FlxCameraFollowStyle;
 import art.SplashState;
 
-import flixel.FlxG;
+import ui.UIWrapper;
+import ui.FieldWrapper;
+import ui.CheckBoxWrapper;
+import ui.MenuWrapper;
 
-class Main extends openfl.display.Sprite {
+import flixel.FlxG;
+import flixel.FlxCamera.FlxCameraFollowStyle;
+
+import openfl.Assets;
+import openfl.display.Sprite;
+
+class Main extends Sprite {
     
     public function new() {
         super();
@@ -20,7 +28,7 @@ class Main extends openfl.display.Sprite {
     
     function onAddedToStage(e = null) {
         
-        art.SplashState.nextState = MenuState;
+        art.SplashState.nextState = GameState;
         
         var zoom = 2;
         addChild
@@ -29,33 +37,27 @@ class Main extends openfl.display.Sprite {
             , Std.int(stage.stageHeight / zoom)
             // , art.SplashState
             , GameState
-            // , MenuState
             , Std.int(stage.frameRate)
             , Std.int(stage.frameRate)
             )
         );
-    }
-}
-
-class MenuState extends flixel.FlxState {
-    
-    override function create() {
-        super.create();
         
-        FlxG.cameras.bgColor = FlxG.stage.color;
-        
-    }
-    
-    override function update(elapsed:Float) {
-        super.update(elapsed);
-        
+        // Assets.loadLibrary ("Layout").onComplete (function (_) {
+            
+        //     var clip = Assets.getMovieClip ("Layout:");
+        //     addChild (clip);
+        // });
+        var swf = Assets.getMovieClip("Layout:");
+        var menu = new MenuWrapper(swf);
+        addChild(swf);
+        menu.show();
     }
 }
 
 class GameState extends flixel.FlxState {
     
     var _level:Level;
-    var _player:Hero;
+    public var hero(default, null):Hero;
     
     override function create() {
         super.create();
@@ -68,13 +70,13 @@ class GameState extends flixel.FlxState {
         _level.initWorld();
         
         // Create _player
-        add(_player = new Hero(12, 12));
-        FlxG.camera.follow(_player, FlxCameraFollowStyle.PLATFORMER);
+        add(hero = new Hero(12, 12));
+        FlxG.camera.follow(hero, FlxCameraFollowStyle.PLATFORMER);
     }
     
     override public function update(elapsed:Float):Void {
         super.update(elapsed);
         
-        FlxG.collide(_level, _player);
+        FlxG.collide(_level, hero);
     }
 }
