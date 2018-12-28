@@ -2,7 +2,6 @@ package;
 
 import art.Enemy;
 import art.Enemy.EnemyBullet;
-import art.SplashState;
 import art.Hero;
 
 import flixel.FlxG;
@@ -13,16 +12,17 @@ class Main extends openfl.display.Sprite {
     public function new() {
         super();
         
-        SplashState.nextState = MenuState;
+        art.SplashState.nextState
+            // = MenuState;
+            = GameState;
         
-        var zoom = 1.5;
+        var zoom = 2;
         addChild(
             new flixel.FlxGame
                 ( Std.int(320 / zoom)
                 , Std.int(480 / zoom)
-                // , art.SplashState
-                , GameState
-                // , MenuState
+                , art.SplashState
+                    // .nextState
                 )
         );
     }

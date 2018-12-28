@@ -12,6 +12,13 @@ class SplashState extends FlxState {
         
         FlxG.cameras.bgColor = FlxG.stage.color;
         
-        add(new Logo(FlxG.switchState.bind(Type.createInstance(nextState, []))));
+        var logo = new Logo();
+        add(logo);
+        var callback:Void->Void = null;
+        callback =
+            FlxG.switchState.bind(Type.createInstance(nextState, []));
+            // () -> { logo.start(callback); };// debug loop forever
+        
+        logo.start(callback);
     }
 }

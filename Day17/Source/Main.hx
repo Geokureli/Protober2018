@@ -36,7 +36,8 @@ class Main extends Sprite {
             ( Std.int(stage.stageWidth  / zoom)
             , Std.int(stage.stageHeight / zoom)
             // , art.SplashState
-            , GameState
+            , art.SplashState
+                //.nextState
             , Std.int(stage.frameRate)
             , Std.int(stage.frameRate)
             )
