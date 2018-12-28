@@ -89,11 +89,11 @@ class DialAPlatformer extends flixel.FlxSprite {
      * Sets the jump arc by setting the jump velocity and how long they can hold the jump button
      * @param minHeight     The desired jump height in pixels
      * @param maxHeight     The desired jump height in pixels
-     * @param timeToApex    The time it takes to reach the top of the minimum jump
+     * @param timeToApex    The time it takes to reach the top of the maximum jump
      */
     public function setupVariableJump(minHeight:Float, maxHeight:Float, timeToApex:Float) {
         
-        setupJump(minHeight, timeToApex);
+        setupJump(minHeight, 2 * timeToApex * minHeight / (minHeight + maxHeight));
         _jumpTime = (maxHeight - minHeight) / -_jumpVelocity;
         _airJumpTime = _jumpTime;
         

@@ -1,5 +1,8 @@
 package ui;
 
+import openfl.display.DisplayObject;
+import openfl.display.DisplayObjectContainer;
+
 class UIWrapper {
     
     public var enabled(default, set):Bool;
@@ -8,19 +11,26 @@ class UIWrapper {
     public function new () {}
     
     @:generic
-    inline function get<T>(object:Dynamic, path:String, defaultValue:T = null):T {
+    inline function get<T:DisplayObject>(parent:DisplayObjectContainer, path:String, defaultValue:T = null):T {
         
-        return aGet(object, path.split("."), defaultValue);
+        return aGet(parent, path.split("."), defaultValue);
     }
     
     @:generic
-    inline function aGet<T>(object:Dynamic, path:Array<String>, defaultValue:T = null):T {
+    inline function aGet<T:DisplayObject>(parent:DisplayObjectContainer, path:Array<String>, defaultValue:T = null):T {
         
-        while (path.length > 0 && Reflect.hasField(object, path[0]))
-            object = Reflect.field(object, path.shift());
+        var child = null;
+        var logName = path.join(".");
+        while (path.length > 0 && parent != null) {
+            
+            child = parent.getChildByName(path.shift());
+            parent = null;
+            if (Std.is(child, DisplayObjectContainer))
+                parent = cast child;
+        }
         
         if (path.length == 0)
-            return object;
+            return cast child;
         
         return defaultValue;
     }

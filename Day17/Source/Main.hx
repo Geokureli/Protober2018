@@ -4,13 +4,11 @@ import art.Level;
 import art.Hero;
 import art.SplashState;
 
-import ui.UIWrapper;
-import ui.FieldWrapper;
-import ui.CheckBoxWrapper;
 import ui.MenuWrapper;
 
 import flixel.FlxG;
 import flixel.FlxCamera.FlxCameraFollowStyle;
+import flixel.util.FlxSignal;
 
 import openfl.Assets;
 import openfl.display.Sprite;
@@ -43,19 +41,21 @@ class Main extends Sprite {
             )
         );
         
-        // Assets.loadLibrary ("Layout").onComplete (function (_) {
-            
-        //     var clip = Assets.getMovieClip ("Layout:");
-        //     addChild (clip);
-        // });
-        var swf = Assets.getMovieClip("Layout:");
-        var menu = new MenuWrapper(swf);
-        addChild(swf);
-        menu.show();
+        GameState.onStart.add(
+            () -> {
+                
+                var swf = Assets.getMovieClip("Layout:MainPage");
+                var menu = new MenuWrapper(swf);
+                addChild(swf);
+                menu.show();
+            }
+        );
     }
 }
 
 class GameState extends flixel.FlxState {
+    
+    static public final onStart = new FlxSignal();
     
     var _level:Level;
     public var hero(default, null):Hero;
@@ -73,6 +73,8 @@ class GameState extends flixel.FlxState {
         // Create _player
         add(hero = new Hero(12, 12));
         FlxG.camera.follow(hero, FlxCameraFollowStyle.PLATFORMER);
+        
+        onStart.dispatch();
     }
     
     override public function update(elapsed:Float):Void {

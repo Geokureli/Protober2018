@@ -33,9 +33,10 @@
     <set name="BUILD_DIR" value="../Export" />
     <classpath name="Source" />
     <classpath name="../Shared/Source"/>
-    <assets path="Assets"           rename="assets"       exclude="*.wav|*.ogg|*.xml|*.db|*.aseprite" />
-    <assets path="../Shared/Assets" rename="sharedAssets" exclude="*.wav|*.ogg|*.xml|*.db|*.aseprite" />
-    <library path="Assets/Layout.bundle" id="layout" preload="true" />
+    <assets path="Assets"           rename="assets"       exclude="*.wav|*.ogg|*.xml|*.db|*.aseprite|*.bundle|*.swf" />
+    <assets path="../Shared/Assets" rename="sharedAssets" exclude="*.wav|*.ogg|*.xml|*.db|*.aseprite|*.bundle|*.swf" />
+    <assets path="Assets/fonts" rename="fonts" embed="true" />
+    <library path="Assets/Layout.bundle" id="layout" preload="true" embed="true" />
     
     <app path="Export" />
     
