@@ -66,9 +66,9 @@ class MenuWrapper extends UIWrapper {
         _fields = [];
         _toggles = [];
         
-        getField     ("minJump", "6.25");
-        getField     ("maxJump").backup = _minJump;
-        getTimeField ("timeToApex", "0.35");
+        getField     ("minJump", "3.5");
+        getField     ("maxJump", "6.5").backup = _minJump;
+        getTimeField ("timeToApex", "0.5");
         getTimeField ("coyoteTime");
         getToggle    ("bounce");
         
@@ -108,45 +108,49 @@ class MenuWrapper extends UIWrapper {
         multiUpdateCheck
             ( [_minJump, _maxJump, _timeToApex, _jumpDistance]
             , (e)->{ 
-                    var timeToMin = 2 * _timeToApex.float * _minJump.float / (_minJump.float + _maxJump.float);
-                    var jumpVelocity = -2 * _minJump.float / timeToMin;
-                    _gravity.text = '${2 * _minJump.float / timeToMin / timeToMin}';
+                    var timeToMin = 2 * _timeToApex.float * _minJump.tiles / (_minJump.tiles + _maxJump.tiles);
+                    var jumpVelocity = -2 * _minJump.tiles / timeToMin;
+                    _gravity.text = '${2 * _minJump.tiles / timeToMin / timeToMin}';
                     _jumpVelocity.text = '$jumpVelocity';
-                    _jumpHoldTime.text = '${(_maxJump.float - _minJump.float) / -jumpVelocity}';
-                    _xSpeed.text = '${_jumpDistance.float / _timeToApex.float / 2}';
+                    _jumpHoldTime.text = '${(_maxJump.tiles - _minJump.tiles) / -jumpVelocity}';
+                    _xSpeed.text = '${_jumpDistance.tiles / _timeToApex.float / 2}';
                 }
             );
         
         multiUpdateCheck
             ( [_minJump, _maxJump, _timeToApex, _minAirJump, _maxAirJump]
-            , (e)->{ 
-                    var timeToMin = 2 * _timeToApex.float * _minJump.float / (_minJump.float + _maxJump.float);
-                    var gravity = 2 * _minJump.float / timeToMin / timeToMin;
-                    var jumpVelocity = -Math.sqrt(2 * gravity * _minAirJump.float);
+            , (e)->{
+                    var jumpVelocity = 0.0;
+                    if (_numAirJumps.int > 0) {
+                        
+                        var timeToMin = 2 * _timeToApex.float * _minJump.tiles / (_minJump.tiles + _maxJump.tiles);
+                        var gravity = 2 * _minJump.tiles / timeToMin / timeToMin;
+                        jumpVelocity = -Math.sqrt(2 * gravity * _minAirJump.tiles);
+                    }
                     _airJumpVelocity.text = '$jumpVelocity';
-                    _airJumpHoldTime.text = '${(_maxAirJump.float - _minAirJump.float) / -jumpVelocity}';
+                    _airJumpHoldTime.text = '${(_maxAirJump.tiles - _minAirJump.tiles) / -jumpVelocity}';
                 }
             );
         
         multiUpdateCheck
             ( [_minJump, _maxJump, _timeToApex, _minWallJump, _maxWallJump]
             , (e)->{ 
-                    var timeToMin = 2 * _timeToApex.float * _minJump.float / (_minJump.float + _maxJump.float);
-                    var gravity = 2 * _minJump.float / timeToMin / timeToMin;
-                    var jumpVelocity = -Math.sqrt(2 * gravity * _minWallJump.float);
+                    var timeToMin = 2 * _timeToApex.float * _minJump.tiles / (_minJump.tiles + _maxJump.tiles);
+                    var gravity = 2 * _minJump.tiles / timeToMin / timeToMin;
+                    var jumpVelocity = -Math.sqrt(2 * gravity * _minWallJump.tiles);
                     _wallJumpVelocity.text = '$jumpVelocity';
-                    _wallJumpHoldTime.text = '${(_maxWallJump.float - _minWallJump.float) / -jumpVelocity}';
+                    _wallJumpHoldTime.text = '${(_maxWallJump.tiles - _minWallJump.tiles) / -jumpVelocity}';
                 }
             );
         
         multiUpdateCheck
             ( [_minJump, _maxJump, _timeToApex, _minSkidJump, _maxSkidJump]
             , (e)->{ 
-                    var timeToMin = 2 * _timeToApex.float * _minJump.float / (_minJump.float + _maxJump.float);
-                    var gravity = 2 * _minJump.float / timeToMin / timeToMin;
-                    var jumpVelocity = -Math.sqrt(2 * gravity * _minSkidJump.float);
+                    var timeToMin = 2 * _timeToApex.float * _minJump.tiles / (_minJump.tiles + _maxJump.tiles);
+                    var gravity = 2 * _minJump.tiles / timeToMin / timeToMin;
+                    var jumpVelocity = -Math.sqrt(2 * gravity * _minSkidJump.tiles);
                     _skidJumpVelocity.text = '$jumpVelocity';
-                    _skidJumpHoldTime.text = '${(_maxSkidJump.float - _minSkidJump.float) / -jumpVelocity}';
+                    _skidJumpHoldTime.text = '${(_maxSkidJump.tiles - _minSkidJump.tiles) / -jumpVelocity}';
                 }
             );
         

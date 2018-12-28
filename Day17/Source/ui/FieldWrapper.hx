@@ -18,6 +18,7 @@ class FieldWrapper extends UIWrapper {
     public var typedValue(get, never):String;
     public var value(get, set):String;
     public var float(get, never):Float;
+    public var tiles(get, never):Float;
     public var int(get, never):Int;
     public var name(get, never):String;
     public var backup(default, set):FieldWrapper;
@@ -94,6 +95,11 @@ class FieldWrapper extends UIWrapper {
         _target.text = onValueChange(v);
         addChangeListener(onUserChange);
         return _target.text;
+    }
+    
+    function get_tiles():Float {
+        
+        return float / 8;
     }
     
     function get_float():Float {
